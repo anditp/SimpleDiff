@@ -193,7 +193,7 @@ def dataset_from_file(npy_fname,
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
     logger.log("DATA")
-    loader = torch.utils.data.DataLoader(
+    return torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
         collate_fn= Collator(levels=levels).collate,
@@ -203,8 +203,6 @@ def dataset_from_file(npy_fname,
         drop_last=True,
         **kwargs)
     
-    while True:
-        yield from loader
     
     
     

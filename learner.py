@@ -72,24 +72,24 @@ class ScIDiffLearner:
     while True:
       # number of epochs = max_steps / num_batches
       # e.g. for max_steps = 100000 and num_batches = 1000, we have 100 epochs
-      features = next(self.dataset)
-      logger.log(f'Epoch {self.step // 327160}')
-      if max_steps is not None and self.step >= max_steps:
-          # Save final checkpoint.
-          self.save_to_checkpoint()
-          return
-      features = _nested_map(features, lambda x: x.to(device) if isinstance(x, torch.Tensor) else x)
-      loss = self.train_step(features)
-      if torch.isnan(loss).any():
-          raise RuntimeError(f'Detected NaN loss at step {self.step}.')
-      if self.is_master:
-          if self.step % self.summary_hop == 0:
-            self._write_summary(self.step, loss)
-          if self.step % self.checkpoints_hop == 0:
-            self.save_to_checkpoint()
-      self.step += 1
-        
-      torch.cuda.empty_cache()
+      for features in self.dataset:
+          logger.log(f'Epoch {self.step // 327160}')
+          if max_steps is not None and self.step >= max_steps:
+              # Save final checkpoint.
+              self.save_to_checkpoint()
+              return
+          features = _nested_map(features, lambda x: x.to(device) if isinstance(x, torch.Tensor) else x)
+          loss = self.train_step(features)
+          if torch.isnan(loss).any():
+              raise RuntimeError(f'Detected NaN loss at step {self.step}.')
+          if self.is_master:
+              if self.step % self.summary_hop == 0:
+                self._write_summary(self.step, loss)
+              if self.step % self.checkpoints_hop == 0:
+                self.save_to_checkpoint()
+          self.step += 1
+            
+          torch.cuda.empty_cache()
 
   def train_step(self, features):
     for param in self.model.parameters():
