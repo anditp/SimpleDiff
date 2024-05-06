@@ -16,7 +16,6 @@ class ScIDiffLearner:
     self.autocast = torch.cuda.amp.autocast(enabled=kwargs.get("fp16", False))
     self.scaler = torch.cuda.amp.GradScaler(enabled=kwargs.get("fp16", False))
     self.step = 0
-    self.is_master = True
     self.checkpoints_hop = kwargs.get("checkpoints_hop", 50000)
     self.summary_hop = kwargs.get("summary_hop", 512)
     # build diffusion process with a given schedule
