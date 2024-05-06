@@ -1,5 +1,5 @@
 import torch 
-from invariant_model import ScIDiff
+from model import ScIDiff
 import os
 from data.lagrangian_datatools import dataset_from_file
 from learners import ScIDiffLearner
