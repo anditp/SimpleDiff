@@ -5,6 +5,7 @@ from torch import nn
 from tqdm import tqdm
 from diffusion import *
 import torch.distributed as dist
+import logger
 
 class ScIDiffLearner:
   def __init__(self, model_dir, model, dataset, optimizer, params, **kwargs):
@@ -70,7 +71,8 @@ class ScIDiffLearner:
     while True:
       # number of epochs = max_steps / num_batches
       # e.g. for max_steps = 100000 and num_batches = 1000, we have 100 epochs
-      for features in tqdm(self.dataset, desc=f'Epoch {self.step // len(self.dataset)}') if self.is_master else self.dataset:
+      for features in self.dataset:
+        logger.log(f'Epoch {self.step // len(self.dataset)}')
         if max_steps is not None and self.step >= max_steps:
           # Save final checkpoint.
           self.save_to_checkpoint()
