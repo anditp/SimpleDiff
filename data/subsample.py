@@ -2,7 +2,7 @@ from lagrangian_datatools import ParticleDataset
 import numpy as np
 
 # Loading the data
-filename = "../data/velocities.npy"
+filename = "../../data/velocities.npy"
 d1 = ParticleDataset(npy_filename=filename, root_dir=".")
 random_seed = 42
 np.random.seed(random_seed)
@@ -16,4 +16,4 @@ subsampled_data = d1.data[random_indices]
 print(subsampled_data.shape)
 # save as a npy file
 # replace with custom path and filename
-np.save("../data/subsampled_velocities.npy", subsampled_data)
+np.save("../../data/subsampled_velocities.npy", subsampled_data)
