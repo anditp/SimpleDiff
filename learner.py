@@ -1,7 +1,6 @@
 import os
 import torch
 from utils import mse_loss, _nested_map
-from torch.utils.tensorboard import SummaryWriter
 from torch import nn
 from tqdm import tqdm
 from diffusion import *
