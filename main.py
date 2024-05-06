@@ -20,6 +20,7 @@ def _get_free_port():
 
 
 def main(args):
+  print("HERE")
   replica_count = device_count()
   # obtain configuration file
   with open(args.params_path) as f:
@@ -28,6 +29,7 @@ def main(args):
   model_params = cfg.parameters
   model_params.data_path = args.dataset_path
   model_params.model_dir = args.experiment_dir
+  print("HERE2")
   
   assert model_params.coordinate >= -1 and model_params.coordinate <=2 and type(model_params.coordinate) == int
 
@@ -37,6 +39,7 @@ def main(args):
   # dump config file to experiment directory
   with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
     yaml.dump(config, f)
+  print("HERE3")
   
   if replica_count > 1:
     if model_params.batch_size % replica_count != 0:

@@ -21,6 +21,10 @@ DATESTAMP=`date +%Y%m%d`
 LOGS_FOLDER="${HOME}/local_logs/simple_diff/${DATESTAMP}/${SLURM_JOB_ID}"
 LOG_STDOUT="local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
 
+
+# Create logs folder
+mkdir -p $LOGS_FOLDER
+
 # ScIDiff-related arguments
 SCIDIFF_PATH="$HOME/SimpleDiff" # path to the ScIDiff repository
 MODELS_PATH="${SCIDIFF_PATH}/experiments/${DATESTAMP}/${SLURM_JOB_ID}" # checkpoints are stored here
@@ -28,8 +32,6 @@ DATA_PATH="$HOME/data/velocities.npy" # path to the training data
 OPTIONS="-p ${SCIDIFF_PATH}/params.yaml" 
 
 
-# Create logs folder
-mkdir -p $LOGS_FOLDER
 # Create checkpoints folder
 mkdir -p $MODELS_PATH
 

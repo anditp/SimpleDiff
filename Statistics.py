@@ -6,7 +6,7 @@ import os
 v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))[:30000,0,:]
 v = np.expand_dims(v, 1)
 #%%
-w = np.load("/Users/andrei/Desktop/bl/samples_100000x1x2000.npz", mmap_mode = "r")["arr_0"][:30000,:,:]
+w = np.load("/Users/andrei/Desktop/bl/samples_30000x1x1800.npz", mmap_mode = "r")["arr_0"]
 
 
 #%%
@@ -51,7 +51,7 @@ class Statistics:
     
     def Structure(self, p, verbose = False):
         vals = []
-        tau = np.linspace(1, 300, 25, dtype = np.int64)
+        tau = np.logspace(0.0, 3.0, 25, dtype = np.int64)
         for t in tau:
             vals.append(np.mean(self.delta_tau(t) ** p))
         
@@ -68,7 +68,7 @@ vals = T.delta_tau_V(10)
 
 #%%
 
-tau = np.linspace(1, 300, 25, dtype = np.int64)
+tau = np.logspace(0.0, 3.0, 25, dtype = np.int64)
 s4 = S.Structure(4)
 s2 = S.Structure(2)
 print(len(tau), s2.shape, s4.shape)
@@ -76,9 +76,12 @@ print(len(tau), s2.shape, s4.shape)
 s4t = T.Structure(4)
 s2t = T.Structure(2)
 
+#%%
+
 fig, ax = plt.subplots()
-plt.loglog(tau, s4 / (s2 ** 2))
-plt.loglog(tau, s4t / (s2t ** 2))
+plt.loglog(tau, s4 / (s2 ** 2), label = "DNS")
+plt.loglog(tau, s4t / (s2t ** 2), label = "Simulated")
+plt.legend()
 plt.show()
 
 
