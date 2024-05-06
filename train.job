@@ -12,6 +12,8 @@
 #SBATCH --requeue
 #SBATCH --requeue
 
+echo "HERE"
+
 DATESTAMP=`date +%Y%m%d`
 # paths to store Slurm's log files
 LOGS_FOLDER="${HOME}/local_logs/simple_diff/${DATESTAMP}/${SLURM_JOB_ID}"
