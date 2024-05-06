@@ -139,9 +139,22 @@ class ScIDiff(nn.Module):
         self.mid_channels = params.model_channels
         # number of heads for the attention at the convolutions
         self.conv_num_heads = params.num_heads if (params.attention_at_convs) else -1
-        self.blocks = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels ,kernel_size=params.kernel_size, res="up", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
-                                 ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
-                                 ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="down", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
+        self.blocks_highest = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="down", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                                             ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
+        self.blocks_lowest = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="up", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                                             ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
+        
+        self.blocks = [self.blocks_highest]
+        for i in range(self.levels - 2):
+            blocks_level = nn.ModuleList([
+                ConvBlock(self.in_channels, mid_channels=self.mid_channels ,kernel_size=params.kernel_size, res="up", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="down", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)
+            ])
+            self.blocks.append(blocks_level)
+        
+        self.blocks.append(self.blocks_lowest)
+        
         # number of heads for the attention at the convolutional blocks outputs
         self.attention_at_blocks = params.attention_at_blocks
         if self.attention_at_blocks:
@@ -159,7 +172,7 @@ class ScIDiff(nn.Module):
         for level in range(self.levels):
             upper_xpred = None
             down_xpred = None
-            same_xpred = self.blocks[1](x_pyramid[level], time_embed)
+            same_xpred = self.blocks[level][1](x_pyramid[level], time_embed)
             if self.attention_at_blocks:
                 # apply attention to the output of the same resolution block
                 same_xpred = self.attention_blocks[1](same_xpred)
@@ -167,7 +180,7 @@ class ScIDiff(nn.Module):
             if level > 0:
                 # here the lower resolution is talking to/ affecting the resolution above
                 # use upsampling block
-                upper_xpred = self.blocks[0](x_pyramid[level], time_embed)
+                upper_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
                 if self.attention_at_blocks:
                     # apply attention to the output of the upsampling block
                     upper_xpred = self.attention_blocks[0](upper_xpred)
@@ -175,7 +188,7 @@ class ScIDiff(nn.Module):
             if level < self.levels - 1:
                 # here the higher resolution is talking to/ affecting the resolution below
                 # use downsampling block
-                down_xpred = self.blocks[2](x_pyramid[level], time_embed)
+                down_xpred = self.blocks[level][2](x_pyramid[level], time_embed)
                 if self.attention_at_blocks:
                     # apply attention to the output of the downsampling block
                     down_xpred = self.attention_blocks[2](down_xpred)

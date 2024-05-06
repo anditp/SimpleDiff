@@ -29,7 +29,6 @@ def train_distributed(replica_id, replica_count, port, model_params):
                                 model_params["levels"], is_distributed=True, 
                                 coordinate=model_params.coordinate)
     device = torch.device('cuda', replica_id)
-    logger.log(device)
     torch.cuda.set_device(device)
     model = ScIDiff(model_params).to(device)
     model = DistributedDataParallel(model, device_ids=[replica_id])

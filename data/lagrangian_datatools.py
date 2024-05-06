@@ -148,7 +148,8 @@ class Collator:
         trajectories = torch.stack(minibatch, dim=0)
         # we have to pad the trajectories to the closest power of 2
         # which is 2048
-        trajectories = F.pad(trajectories, (24,24), value=0)
+        if self.levels > 4:
+            trajectories = F.pad(trajectories, (24,24), value=0)
         # get a dictionary with the batch rescaled to the different levels
         batch_interp = interpolate_nscales(trajectories, scales=self.levels)
         return batch_interp
@@ -169,8 +170,7 @@ class ToDictTensor(object):
 def dataset_from_file(npy_fname, 
                       batch_size, 
                       levels, 
-                      num_replicas = 1, 
-                      rank = 0, coordinate=None, 
+                      coordinate=None, 
                       is_distributed=False, **kwargs):
     """
     Function that returns a DataLoader for the Lagrangian trajectories dataset.
@@ -193,14 +193,12 @@ def dataset_from_file(npy_fname,
     if coordinate is not None:
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
-    logger.log("DATA")
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
         collate_fn= Collator(levels=levels).collate,
         shuffle=not is_distributed,
         sampler=DistributedSampler(dataset) if is_distributed else None,
-        pin_memory=True,
         drop_last=True,
         **kwargs)
     
