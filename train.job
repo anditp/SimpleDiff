@@ -4,26 +4,19 @@
 
 #SBATCH --partition=titanic
 #SBATCH --gres=gpu:4
-#SBATCH -t 00:10:00
 #SBATCH --job-name=scidiff
 #SBATCH --cpus-per-task=8
-#SBATCH --output=logs/slurm_out.stdout
-#SBATCH --error=logs/slurm_out.stderr
+#SBATCH --output=local_logs/simple_diff/slurm_out_%j.stdout
+#SBATCH --error=local_logs/simple_diff/slurm_out_%j.stderr
 #SBATCH --mem=40g
 #SBATCH --open-mode=append
 #SBATCH --requeue
 #SBATCH --requeue
 
-echo "HERE"
-
 DATESTAMP=`date +%Y%m%d`
 # paths to store Slurm's log files
-LOGS_FOLDER="${HOME}/local_logs/simple_diff/${DATESTAMP}/${SLURM_JOB_ID}"
+LOGS_FOLDER="${HOME}/local_logs/scidiff/${DATESTAMP}/${SLURM_JOB_ID}"
 LOG_STDOUT="local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
-
-
-# Create logs folder
-mkdir -p $LOGS_FOLDER
 
 # ScIDiff-related arguments
 SCIDIFF_PATH="$HOME/SimpleDiff" # path to the ScIDiff repository
@@ -32,6 +25,9 @@ DATA_PATH="$HOME/data/velocities.npy" # path to the training data
 OPTIONS="-p ${SCIDIFF_PATH}/params.yaml" 
 
 
+
+# Create logs folder
+mkdir -p $LOGS_FOLDER
 # Create checkpoints folder
 mkdir -p $MODELS_PATH
 
@@ -42,13 +38,14 @@ echo "JOB ID: $SLURM_JOB_ID" >> $LOG_STDOUT
 
 # Load the miniconda environment
 source $HOME/.bashrc
+conda activate turbulent_env
 
 which python >> $LOG_STDOUT
 
 # Training scidiff model with 3-D lagrangian trajectories
 # MODELS_PATH can be a path to a directory that contains a weights.pt checkpoint file
-python $SCIDIFF_PATH/main.py $MODELS_PATH $DATA_PATH $OPTIONS >> $LOG_STDOUT
+python $SCIDIFF_PATH/src/main.py $MODELS_PATH $DATA_PATH $OPTIONS >> $LOG_STDOUT
 
 # Move Slurm's logs to folder named with date
 mv $HOME/$LOG_STDOUT $LOGS_FOLDER
-mv $HOME/local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stderr $LOGS_FOLDER
+mv $HOME/local_logs/scidiff/slurm_out_$SLURM_JOB_ID.stderr $LOGS_FOLDER
