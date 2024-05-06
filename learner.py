@@ -72,7 +72,7 @@ class ScIDiffLearner:
       # number of epochs = max_steps / num_batches
       # e.g. for max_steps = 100000 and num_batches = 1000, we have 100 epochs
       features = next(self.dataset)
-      logger.log(f'Epoch {self.step // len(self.dataset)}')
+      logger.log(f'Epoch {self.step // 327160}')
       if max_steps is not None and self.step >= max_steps:
           # Save final checkpoint.
           self.save_to_checkpoint()

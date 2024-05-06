@@ -19,10 +19,11 @@ def interp1d(sample, dim):
 
 class ParticleDataset(Dataset):
     def __init__(self, npy_filename, root_dir=None, transform=None):
+        super().__init__()
         self.npy_filename = npy_filename
         self.root_dir = root_dir
         self.transform = transform
-        self.data = np.load(self.npy_filename, encoding="ASCII", allow_pickle=True, mmap_mode='r+')
+        self.data = np.load(self.npy_filename, encoding="ASCII", allow_pickle=True, mmap_mode='r')
 
     def __len__(self):
         return self.data.shape[0]
