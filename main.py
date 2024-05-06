@@ -12,6 +12,7 @@ from training import train, train_distributed
 import yaml
 from attrdict import AttrDict
 import os
+import logger
 
 def _get_free_port():
   import socketserver
@@ -20,36 +21,38 @@ def _get_free_port():
 
 
 def main(args):
-  print("HERE1")
-  replica_count = device_count()
-  print("REPLICA")
-  # obtain configuration file
-  with open(args.params_path) as f:
-    config = yaml.load(f, Loader=yaml.SafeLoader)  # config is dict
-    cfg = AttrDict(config)
-  model_params = cfg.parameters
-  model_params.data_path = args.dataset_path
-  model_params.model_dir = args.experiment_dir
-  print("HERE2")
-  
-  assert model_params.coordinate >= -1 and model_params.coordinate <=2 and type(model_params.coordinate) == int
+    logger.configure(dir = "logs")
 
-  model_params.coordinate = None if model_params.coordinate==-1 else model_params.coordinate
-  model_params.num_coords = 3 if model_params.coordinate is None else 1
-  print(model_params)
-  # dump config file to experiment directory
-  with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
-    yaml.dump(config, f)
-  print("HERE3")
+    logger.log("HERE1")
+    replica_count = device_count()
+    logger.log("REPLICA")
+    # obtain configuration file
+    with open(args.params_path) as f:
+        config = yaml.load(f, Loader=yaml.SafeLoader)  # config is dict
+    cfg = AttrDict(config)
+    model_params = cfg.parameters
+    model_params.data_path = args.dataset_path
+    model_params.model_dir = args.experiment_dir
+    print("HERE2")
   
-  if replica_count > 1:
-    if model_params.batch_size % replica_count != 0:
-      raise ValueError(f"Batch size {model_params.batch_size} is not evenly divisble by # GPUs {replica_count}.")
-    model_params.batch_size = model_params.batch_size // replica_count
-    port = _get_free_port()
-    spawn(train_distributed, args=(replica_count, port, model_params), nprocs=replica_count, join=True)
-  else:
-    train(model_params)
+    assert model_params.coordinate >= -1 and model_params.coordinate <=2 and type(model_params.coordinate) == int
+    
+    model_params.coordinate = None if model_params.coordinate==-1 else model_params.coordinate
+    model_params.num_coords = 3 if model_params.coordinate is None else 1
+    print(model_params)
+    # dump config file to experiment directory
+    with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
+        yaml.dump(config, f)
+    print("HERE3")
+  
+    if replica_count > 1:
+        if model_params.batch_size % replica_count != 0:
+            raise ValueError(f"Batch size {model_params.batch_size} is not evenly divisble by # GPUs {replica_count}.")
+        model_params.batch_size = model_params.batch_size // replica_count
+        port = _get_free_port()
+        spawn(train_distributed, args=(replica_count, port, model_params), nprocs=replica_count, join=True)
+    else:
+        train(model_params)
 
 
 if __name__ == "__main__":
