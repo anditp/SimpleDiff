@@ -4,6 +4,7 @@ from utils import mse_loss, _nested_map
 from torch import nn
 from tqdm import tqdm
 from diffusion import *
+import torch.distributed as dist
 
 class ScIDiffLearner:
   def __init__(self, model_dir, model, dataset, optimizer, params, **kwargs):
@@ -84,6 +85,8 @@ class ScIDiffLearner:
           if self.step % self.checkpoints_hop == 0:
             self.save_to_checkpoint()
         self.step += 1
+        
+        torch.cuda.empty_cache()
 
   def train_step(self, features):
     for param in self.model.parameters():

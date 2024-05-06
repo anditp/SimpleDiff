@@ -25,7 +25,6 @@ def main(args):
     logger.configure(dir = "logs")
 
     replica_count = device_count()
-    logger.log(replica_count)
     # obtain configuration file
     with open(args.params_path) as f:
         config = yaml.load(f, Loader=yaml.SafeLoader)  # config is dict
@@ -44,7 +43,6 @@ def main(args):
         yaml.dump(config, f)
   
     if replica_count > 1:
-        logger.log(replica_count)
         if model_params.batch_size % replica_count != 0:
           raise ValueError(f"Batch size {model_params.batch_size} is not evenly divisble by # GPUs {replica_count}.")
         model_params.batch_size = model_params.batch_size // replica_count
