@@ -20,8 +20,9 @@ def _get_free_port():
 
 
 def main(args):
-  print("HERE")
+  print("HERE1")
   replica_count = device_count()
+  print("REPLICA")
   # obtain configuration file
   with open(args.params_path) as f:
     config = yaml.load(f, Loader=yaml.SafeLoader)  # config is dict

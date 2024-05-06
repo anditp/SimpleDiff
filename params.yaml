@@ -16,4 +16,4 @@ parameters:
   proj_embed_dim: 512
   scheduler: tanh61
   traj_len: 2000
-project: multiscale-turbulence
+project: scidiff
