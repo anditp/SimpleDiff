@@ -83,9 +83,10 @@ class ConvBlock(nn.Module):
                                      nn.SiLU())
         self.has_attention = num_heads > 0
         if self.has_attention:
-            self.attention = AttentionBlock(mid_channels, num_heads=num_heads)
-        self.out_conv = nn.Sequential(Conv1d(mid_channels, out_channels=in_channels, kernel_size=kernel_size, padding=1),
+            self.attention = AttentionBlock(mid_channels, num_heads=num_heads) 
+        self.mid_conv = nn.Sequential(Conv1d(mid_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
                                  nn.SiLU())
+        self.mid_conv = Conv1d(mid_channels, out_channels=in_channels, kernel_size=kernel_size, padding=1)
         if res == "same":
             self.op = nn.Identity()
         elif res == "down":
@@ -112,6 +113,7 @@ class ConvBlock(nn.Module):
         h = h + time_embed
         if self.has_attention:
             h = self.attention(h)
+        h = h + self.mid_conv(h)
         h = self.out_conv(h)
         if self.res == "up":
             y = self.op(h, scale_factor=2, mode="nearest")
