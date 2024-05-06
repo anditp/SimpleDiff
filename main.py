@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from torch.cuda import device_count
+from torch.multiprocessing import spawn
 import torch
 
 # Monkey patch collections
@@ -8,7 +9,7 @@ import collections.abc
 for type_name in collections.abc.__all__:
     setattr(collections, type_name, getattr(collections.abc, type_name))
 
-from training import train
+from training import train, train_distributed
 import yaml
 from attrdict import AttrDict
 import os
@@ -42,8 +43,16 @@ def main(args):
     with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
         yaml.dump(config, f)
   
-    logger.log(torch.cuda.is_available())
-    train(model_params)
+    if replica_count > 1:
+        logger.log(replica_count)
+        if model_params.batch_size % replica_count != 0:
+          raise ValueError(f"Batch size {model_params.batch_size} is not evenly divisble by # GPUs {replica_count}.")
+        model_params.batch_size = model_params.batch_size // replica_count
+        port = _get_free_port()
+        spawn(train_distributed, args=(replica_count, port, model_params), nprocs=replica_count, join=True)
+    else:
+        train(model_params)
+
 
 
 if __name__ == "__main__":
