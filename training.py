@@ -2,7 +2,7 @@ import torch
 from model import ScIDiff
 import os
 from data.lagrangian_datatools import dataset_from_file
-from learners import ScIDiffLearner
+from learner import ScIDiffLearner
 from torch.nn.parallel import DistributedDataParallel
 
 def _train_impl(replica_id, model, dataset, params):
