@@ -16,7 +16,7 @@ def _train_impl(replica_id, model, dataset, params):
 
 def train(model_params):
     dataset = dataset_from_file(model_params.data_path, model_params.batch_size, model_params.levels, coordinate=model_params.coordinate)
-    model = ScIDiff(model_params).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+    model = ScIDiff(model_params).to(device='cuda:0' if torch.cuda.is_available() else 'cpu')
     _train_impl(0, model, dataset, model_params)
 
 

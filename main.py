@@ -33,7 +33,7 @@ def main(args):
     model_params = cfg.parameters
     model_params.data_path = args.dataset_path
     model_params.model_dir = args.experiment_dir
-    print("HERE2")
+    logger.log("HERE2")
   
     assert model_params.coordinate >= -1 and model_params.coordinate <=2 and type(model_params.coordinate) == int
     

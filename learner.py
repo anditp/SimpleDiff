@@ -82,7 +82,7 @@ class ScIDiffLearner:
           raise RuntimeError(f'Detected NaN loss at step {self.step}.')
         if self.is_master:
           if self.step % self.summary_hop == 0:
-            self._write_summary(self.step, loss)
+            self._write_summary()
           if self.step % self.checkpoints_hop == 0:
             self.save_to_checkpoint()
         self.step += 1
@@ -117,15 +117,11 @@ class ScIDiffLearner:
 
     return loss
 
-  def _write_summary(self, step, loss):
+  def _write_summary(self):
     """
     Function that adds to Tensorboard the loss and the gradient norm.
     """
-    writer = self.summary_writer or SummaryWriter(self.model_dir, purge_step=step)
-    writer.add_scalar('train/loss', loss, step)
-    writer.add_scalar('train/grad_norm', self.grad_norm, step)
-    writer.flush()
-    self.summary_writer = writer
+    logger.logkv("step", self.step)
 
   def compute_loss(self, true_vals, predictions):
     """
