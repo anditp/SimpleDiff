@@ -6,8 +6,8 @@ import os
 v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))[:30000,0,:]
 v = np.expand_dims(v, 1)
 #%%
-w = np.load("/Users/andrei/Desktop/bl/samples_30000x1x1800.npz", mmap_mode = "r")["arr_0"]
-
+w = np.load("/Users/andrei/Desktop/bl/generated_samples.npy", mmap_mode = "r").transpose((0, 2, 1))[:,0,:]
+w = np.expand_dims(w, 1)
 
 #%%
 plt.plot(w[0].flatten())
@@ -33,18 +33,6 @@ class Statistics:
         delta_tau = self.delta_tau(tau)
         delta_tau /= np.std(delta_tau)
         
-        num_bins = 100
-        
-        fig, ax = plt.subplots()
-        n, bins, patches = ax.hist(delta_tau, num_bins, density=True)
-        ax.set_xlabel('Value')
-        ax.set_ylabel('Probability density')
-        ax.set_title('Histogram')
-        plt.yscale("log")
-        
-        # Tweak spacing to prevent clipping of ylabel
-        fig.tight_layout()
-        plt.show()
         
         return delta_tau
     
@@ -64,7 +52,23 @@ class Statistics:
 S = Statistics(v)
 T = Statistics(w)
 
-vals = T.delta_tau_V(10)
+vals_T = T.delta_tau_V(10)
+vals_S = S.delta_tau_V(10)
+
+num_bins = 1000
+
+fig, ax = plt.subplots()
+ax.hist(vals_T, num_bins, alpha = 0.5, density=True, label = "Sampled")
+ax.hist(vals_S, num_bins, alpha = 0.5, density=True, label = "Simulated")
+ax.set_xlabel('Value')
+ax.set_ylabel('Probability density')
+ax.set_title('Histogram')
+ax.legend()
+plt.yscale("log")
+
+# Tweak spacing to prevent clipping of ylabel
+fig.tight_layout()
+plt.show()
 
 #%%
 

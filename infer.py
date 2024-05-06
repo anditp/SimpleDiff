@@ -7,6 +7,7 @@ from diffusion import create_beta_schedule
 import numpy as np
 from utils import interpolate_nscales
 from torch.nn import functional as F
+from torch.nn import DataParallel as DP
 
 MIN_VALS = np.array([-9.97037474, -8.63455392, -8.3230226 ])
 MAX_VALS = np.array([ 9.78241835, 10.2621928,   9.73699859])
