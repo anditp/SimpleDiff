@@ -6,7 +6,7 @@ import os
 v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))[:30000,0,:]
 v = np.expand_dims(v, 1)
 #%%
-w = np.load("/Users/andrei/Desktop/bl/generated_samples.npy", mmap_mode = "r").transpose((0, 2, 1))[:,0,:]
+w = np.load("/Users/andrei/Desktop/bl/generated_simple_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,0,:]
 w = np.expand_dims(w, 1)
 
 #%%
@@ -59,7 +59,7 @@ num_bins = 1000
 
 fig, ax = plt.subplots()
 ax.hist(vals_T, num_bins, alpha = 0.5, density=True, label = "Sampled")
-ax.hist(vals_S, num_bins, alpha = 0.5, density=True, label = "Simulated")
+#ax.hist(vals_S, num_bins, alpha = 0.5, density=True, label = "Simulated")
 ax.set_xlabel('Value')
 ax.set_ylabel('Probability density')
 ax.set_title('Histogram')
