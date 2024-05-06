@@ -120,11 +120,16 @@ class ScIDiffLearner:
 
     return loss
 
-  def _write_summary(self):
+  def _write_summary(self, step, loss):
     """
     Function that adds to Tensorboard the loss and the gradient norm.
     """
-    logger.logkv("step", self.step)
+    writer = self.summary_writer or SummaryWriter(self.model_dir, purge_step=step)
+    writer.add_scalar('train/loss', loss, step)
+    writer.add_scalar('train/grad_norm', self.grad_norm, step)
+    writer.flush()
+    self.summary_writer = writer
+
 
   def compute_loss(self, true_vals, predictions):
     """
