@@ -187,7 +187,7 @@ class ScIDiff(nn.Module):
             
             if level == 0:
                 down_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
-                pred_x_pyramid[1] = pred_x_pyramid[1] + down_xpred
+                pred_x_pyramid[1] = down_xpred
             
             if level == self.levels - 1:
                 upper_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
