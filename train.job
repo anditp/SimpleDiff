@@ -23,7 +23,7 @@ LOG_STDOUT="${HOME}/local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
 SCIDIFF_PATH="$HOME/SimpleDiff" # path to the ScIDiff repository
 MODELS_PATH="${SCIDIFF_PATH}/experiments/${DATESTAMP}/${SLURM_JOB_ID}" # checkpoints are stored here
 DATA_PATH="$HOME/data/subsampled_velocities.npy" # path to the training data
-OPTIONS="-p ${SCIDIFF_PATH}/params.yaml" 
+OPTIONS="-p ${SCIDIFF_PATH}/simple_params.yaml" 
 
 
 
