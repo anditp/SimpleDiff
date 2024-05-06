@@ -24,6 +24,7 @@ SOFTWARE.
 
 from torch import nn
 import torch.nn.functional as F
+import logger
 
 def get_index_from_list(vals, t, x_shape):
     """ 
@@ -97,6 +98,7 @@ def interpolate_nscales(sample, scales=2, method="nearest-exact", to_numpy=False
     '''
     # sample has to be a Tensor of shape (batch_size, coords, length)
     # e.g for one trajectory, Tensor should be (1, 3, 2000)
+    logger.log(sample.shape)
     pyramidal_sample = {0: sample}
     for i in range(1, scales):
         scale = 1/2**i
