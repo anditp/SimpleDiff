@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from torch.nn import functional as F
 from torch.utils.data.distributed import DistributedSampler
 from torchvision.transforms import Compose
-from utils import interpolate_nscales
+from simple_diff.utils import interpolate_nscales
 import logger
 
 
