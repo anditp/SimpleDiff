@@ -83,7 +83,7 @@ class ScIDiffLearner:
           raise RuntimeError(f'Detected NaN loss at step {self.step}.')
       if self.is_master:
           if self.step % self.summary_hop == 0:
-            self._write_summary()
+            self._write_summary(self.step, loss)
           if self.step % self.checkpoints_hop == 0:
             self.save_to_checkpoint()
       self.step += 1
