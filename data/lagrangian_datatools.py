@@ -163,7 +163,12 @@ class ToDictTensor(object):
         }
 
 
-def dataset_from_file(npy_fname, batch_size, levels, coordinate=None, is_distributed=False, **kwargs):
+def dataset_from_file(npy_fname, 
+                      batch_size, 
+                      levels, 
+                      num_replicas = 1, 
+                      rank = 0, coordinate=None, 
+                      is_distributed=False, **kwargs):
     """
     Function that returns a DataLoader for the Lagrangian trajectories dataset.
 
@@ -185,12 +190,19 @@ def dataset_from_file(npy_fname, batch_size, levels, coordinate=None, is_distrib
     if coordinate is not None:
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
-    return torch.utils.data.DataLoader(
-      dataset,
-      batch_size=batch_size,
-      collate_fn= Collator(levels=levels).collate,
-      shuffle=not is_distributed,
-      sampler=DistributedSampler(dataset) if is_distributed else None,
-      pin_memory=True,
-      drop_last=True,
-      **kwargs)
+    loader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=batch_size,
+        collate_fn= Collator(levels=levels).collate,
+        shuffle=not is_distributed,
+        sampler=DistributedSampler(dataset, num_replicas = num_replicas, rank = rank) if is_distributed else None,
+        pin_memory=True,
+        drop_last=True,
+        **kwargs)
+    
+    while True:
+        yield from loader
+    
+    
+    
+    
