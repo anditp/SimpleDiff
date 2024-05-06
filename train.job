@@ -31,7 +31,6 @@ mkdir -p $LOGS_FOLDER
 # Create checkpoints folder
 mkdir -p $MODELS_PATH
 
-echo "HERE"
 
 # Start or restart experiment
 date >> $LOG_STDOUT
