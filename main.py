@@ -47,6 +47,7 @@ def main(args):
           raise ValueError(f"Batch size {model_params.batch_size} is not evenly divisble by # GPUs {replica_count}.")
         model_params.batch_size = model_params.batch_size // replica_count
         port = _get_free_port()
+        logger.log("PORT")
         spawn(train_distributed, args=(replica_count, port, model_params), nprocs=replica_count, join=True)
     else:
         train(model_params)
