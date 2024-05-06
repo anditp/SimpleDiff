@@ -2,7 +2,7 @@
 
 # This is a job script, which was used for training the ScIDiff model
 
-#SBATCH --partition=gpu
+#SBATCH --partition=titanic
 #SBATCH --gres=gpu:4
 #SBATCH --job-name=scidiff
 #SBATCH --cpus-per-task=8
