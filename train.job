@@ -16,7 +16,7 @@
 DATESTAMP=`date +%Y%m%d`
 # paths to store Slurm's log files
 LOGS_FOLDER="${HOME}/local_logs/simple_diff/${DATESTAMP}/${SLURM_JOB_ID}"
-LOG_STDOUT="local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
+LOG_STDOUT="${HOME}/local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
 
 # ScIDiff-related arguments
 SCIDIFF_PATH="$HOME/SimpleDiff" # path to the ScIDiff repository
