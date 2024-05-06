@@ -79,7 +79,7 @@ def max_pool_nd(dims, *args, **kwargs):
         return nn.MaxPool3d(*args, **kwargs)
     raise ValueError(f"unsupported dimensions: {dims}")
 
-def interpolate_nscales(sample, scales=2, method="nearest-exact", to_numpy=False):
+def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
     '''
     Function that applies a pyramidal interpolation to a batch of samples. A pyramidal interpolation
     is a sequence of interpolations with a scale factor of 1/2, 1/4, 1/8 and so on.
