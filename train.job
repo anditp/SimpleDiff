@@ -15,7 +15,7 @@
 
 DATESTAMP=`date +%Y%m%d`
 # paths to store Slurm's log files
-LOGS_FOLDER="${HOME}/local_logs/scidiff/${DATESTAMP}/${SLURM_JOB_ID}"
+LOGS_FOLDER="${HOME}/local_logs/simple_diff/${DATESTAMP}/${SLURM_JOB_ID}"
 LOG_STDOUT="local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
 
 # ScIDiff-related arguments
@@ -38,13 +38,12 @@ echo "JOB ID: $SLURM_JOB_ID" >> $LOG_STDOUT
 
 # Load the miniconda environment
 source $HOME/.bashrc
-conda activate turbulent_env
 
 which python >> $LOG_STDOUT
 
 # Training scidiff model with 3-D lagrangian trajectories
 # MODELS_PATH can be a path to a directory that contains a weights.pt checkpoint file
-python $SCIDIFF_PATH/src/main.py $MODELS_PATH $DATA_PATH $OPTIONS >> $LOG_STDOUT
+python $SCIDIFF_PATH/main.py $MODELS_PATH $DATA_PATH $OPTIONS >> $LOG_STDOUT
 
 # Move Slurm's logs to folder named with date
 mv $HOME/$LOG_STDOUT $LOGS_FOLDER
