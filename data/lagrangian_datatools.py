@@ -6,6 +6,7 @@ from torch.nn import functional as F
 from torch.utils.data.distributed import DistributedSampler
 from torchvision.transforms import Compose
 from utils import interpolate_nscales
+import logger
 
 
 # interpolation methods
@@ -191,12 +192,13 @@ def dataset_from_file(npy_fname,
     if coordinate is not None:
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
+    logger.log("DATA")
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
         collate_fn= Collator(levels=levels).collate,
         shuffle=not is_distributed,
-        sampler=DistributedSampler(dataset, num_replicas = num_replicas, rank = rank) if is_distributed else None,
+        sampler=DistributedSampler(dataset) if is_distributed else None,
         pin_memory=True,
         drop_last=True,
         **kwargs)
