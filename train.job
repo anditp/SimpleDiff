@@ -18,6 +18,7 @@ DATESTAMP=`date +%Y%m%d`
 LOGS_FOLDER="${HOME}/local_logs/simple_diff/${DATESTAMP}/${SLURM_JOB_ID}"
 LOG_STDOUT="local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stdout"
 
+echo "HERE"
 # ScIDiff-related arguments
 SCIDIFF_PATH="$HOME/SimpleDiff" # path to the ScIDiff repository
 MODELS_PATH="${SCIDIFF_PATH}/experiments/${DATESTAMP}/${SLURM_JOB_ID}" # checkpoints are stored here
