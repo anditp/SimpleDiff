@@ -48,4 +48,4 @@ python $SCIDIFF_PATH/src/main.py $MODELS_PATH $DATA_PATH $OPTIONS >> $LOG_STDOUT
 
 # Move Slurm's logs to folder named with date
 mv $HOME/$LOG_STDOUT $LOGS_FOLDER
-mv $HOME/local_logs/scidiff/slurm_out_$SLURM_JOB_ID.stderr $LOGS_FOLDER
+mv $HOME/local_logs/simple_diff/slurm_out_$SLURM_JOB_ID.stderr $LOGS_FOLDER
