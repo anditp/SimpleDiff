@@ -114,7 +114,7 @@ class ConvBlock(nn.Module):
             h = self.attention(h)
         h = self.out_conv(h)
         if self.res == "up":
-            y = self.op(h, scale_factor=2, mode="nearest-exact")
+            y = self.op(h, scale_factor=2, mode="nearest")
         else :
             y = self.op(h)
         return y 
