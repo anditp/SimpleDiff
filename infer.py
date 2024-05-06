@@ -1,6 +1,6 @@
 import torch
 from argparse import ArgumentParser
-from imodel import ScIDiff
+from model import ScIDiff
 import yaml
 from attrdict import AttrDict
 from diffusion import create_beta_schedule
