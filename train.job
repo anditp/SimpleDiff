@@ -6,8 +6,8 @@
 #SBATCH --gres=gpu:4
 #SBATCH --job-name=scidiff
 #SBATCH --cpus-per-task=8
-#SBATCH --output=logs/scidiff/slurm_out_%j.stdout
-#SBATCH --error=logs/scidiff/slurm_out_%j.stderr
+#SBATCH --output=logs/slurm_out_%j.stdout
+#SBATCH --error=logs/slurm_out_%j.stderr
 #SBATCH --mem=40g
 #SBATCH --requeue
 #SBATCH --requeue
