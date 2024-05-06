@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from torch.cuda import device_count
 import torch
-from torch.multiprocessing import spawn
 
 # Monkey patch collections
 import collections
@@ -9,7 +8,7 @@ import collections.abc
 for type_name in collections.abc.__all__:
     setattr(collections, type_name, getattr(collections.abc, type_name))
 
-from training import train, train_distributed
+from training import train
 import yaml
 from attrdict import AttrDict
 import os
