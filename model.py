@@ -144,16 +144,16 @@ class ScIDiff(nn.Module):
         self.blocks_lowest = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="up", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
                                              ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
         
-        self.blocks = [self.blocks_highest]
+        blocks = []
         for i in range(self.levels - 2):
             blocks_level = nn.ModuleList([
                 ConvBlock(self.in_channels, mid_channels=self.mid_channels ,kernel_size=params.kernel_size, res="up", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
                 ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
                 ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="down", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)
             ])
-            self.blocks.append(blocks_level)
+            blocks.append(blocks_level)
         
-        self.blocks.append(self.blocks_lowest)
+        self.blocks = nn.ModuleList([self.blocks_highest] + blocks + [self.blocks_lowest])
         
         # number of heads for the attention at the convolutional blocks outputs
         self.attention_at_blocks = params.attention_at_blocks
