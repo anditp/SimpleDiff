@@ -1,5 +1,5 @@
 import torch 
-from model import ScIDiff
+from model import ScIDiff, Simple_Diff
 import os
 from data.lagrangian_datatools import dataset_from_file, noise_dataset
 from learner import ScIDiffLearner
