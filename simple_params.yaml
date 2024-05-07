@@ -1,8 +1,8 @@
 parameters:
   attention_at_blocks: true
   attention_at_convs: false
-  batch_size: 128
-  coordinate: -1
+  batch_size: 192
+  coordinate: 0
   embed_dim: 128
   epochs: 500
   kernel_size: 3
@@ -12,7 +12,7 @@ parameters:
   max_steps: 1000000
   model_channels: 30
   num_diff_steps: 800
-  num_heads: 4
+  num_heads: 3
   proj_embed_dim: 512
   scheduler: tanh61
   traj_len: 2000
