@@ -175,24 +175,42 @@ class ScIDiff(nn.Module):
             upper_xpred = None
             down_xpred = None
             same_xpred = self.blocks[level][1](x_pyramid[level], time_embed)
+            if self.attention_at_blocks:
+                # apply attention to the output of the same resolution block
+                same_xpred = self.attention_blocks[1](same_xpred)
+
             pred_x_pyramid[level] = same_xpred if pred_x_pyramid[level] is None else pred_x_pyramid[level] + same_xpred
             
             if level > 0 and level < self.levels - 1:
                 # here the lower resolution is talking to/ affecting the resolution above
                 # use upsampling block
                 upper_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    upper_xpred = self.attention_blocks[0](upper_xpred)
+
                 pred_x_pyramid[level-1] = pred_x_pyramid[level-1] + upper_xpred
                 # here the higher resolution is talking to/ affecting the resolution below
                 # use downsampling block
                 down_xpred = self.blocks[level][2](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    down_xpred = self.attention_blocks[2](down_xpred)
+
                 pred_x_pyramid[level+1] = down_xpred if pred_x_pyramid[level+1] is None else pred_x_pyramid[level+1] + down_xpred
             
             if level == 0:
                 down_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    down_xpred = self.attention_blocks[2](down_xpred)
                 pred_x_pyramid[1] = down_xpred
             
             if level == self.levels - 1:
                 upper_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    upper_xpred = self.attention_blocks[0](upper_xpred)
                 pred_x_pyramid[level - 1] = pred_x_pyramid[level-1] + upper_xpred
             
         return pred_x_pyramid

@@ -10,7 +10,7 @@ parameters:
   levels: 4
   max_grad_norm: 1
   max_steps: 1000000
-  model_channels: 200
+  model_channels: 30
   num_diff_steps: 800
   num_heads: 0
   proj_embed_dim: 512
