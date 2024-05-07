@@ -96,7 +96,6 @@ class ScIDiffLearner:
       param.grad = None
 
     device = features[0].device # device of the batch
-    print(next(self.model.parameters()).device, device)
     B = features[0].shape[0] # batch size
 
     with self.autocast:

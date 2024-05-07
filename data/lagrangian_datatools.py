@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from torch.utils.data.distributed import DistributedSampler
 from torchvision.transforms import Compose
 sys.path.append('../')
-from utils import interpolate_nscales
+from utils import interpolate_nscales, fourier_nscales
 import logger
 
 
@@ -172,6 +172,33 @@ class Collator:
         # get a dictionary with the batch rescaled to the different levels
         batch_interp = interpolate_nscales(trajectories, scales=self.levels)
         return batch_interp
+
+
+
+class Collator_fourier:
+    def __init__(self, levels):
+        # levels is the number of scales for the interpolation
+        self.levels = levels
+        pass
+
+    def collate(self, minibatch):
+        """
+        Function that takes a list of records and returns a dictionary with the
+        batch interpolated to the different scales.
+
+        Args:
+            minibatch (list): list of records. Each record is a tensor of shape (num_coords, 2000).
+        
+        Returns:
+            dict[int]: a dictionary with each scale as key and the batch interpolated to the 
+            corresponding scale.
+        """        
+
+        trajectories = torch.stack(minibatch, dim=0)
+        # get a dictionary with the batch rescaled to the different levels
+        batch_fourier = fourier_nscales(trajectories, scales=self.levels)
+        return batch_fourier
+
     
 
 class ToDictTensor(object):
@@ -190,7 +217,8 @@ def dataset_from_file(npy_fname,
                       batch_size, 
                       levels, 
                       coordinate=None, 
-                      is_distributed=False, **kwargs):
+                      is_distributed=False, 
+                      fourier = False, **kwargs):
     """
     Function that returns a DataLoader for the Lagrangian trajectories dataset.
 
@@ -212,24 +240,21 @@ def dataset_from_file(npy_fname,
     if coordinate is not None:
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
+    
+    if fourier:
+        col = Collator_fourier(levels = levels)
+    else:
+        col = Collator(levels = levels)
+    
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
-        collate_fn= Collator(levels=levels).collate,
+        collate_fn= col.collate,
         shuffle=not is_distributed,
         sampler=DistributedSampler(dataset) if is_distributed else None,
         drop_last=True,
         **kwargs)
     
-
-
-def noise_dataset(shape, batch_size, levels, is_distributed):
-    transforms = [TensorChanFirst()]
-    dataset = NoiseDataset(shape, transforms)
-    return torch.utils.data.DataLoader(dataset, batch_size = batch_size, 
-                                       collate_fn = Collator(levels = levels).collate,
-                                       sampler = DistributedSampler(dataset),
-                                       drop_last = True)
     
 
     

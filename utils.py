@@ -24,7 +24,9 @@ SOFTWARE.
 
 from torch import nn
 import torch.nn.functional as F
+from torch.signal.windows import gaussian
 import logger
+import torch
 
 def get_index_from_list(vals, t, x_shape):
     """ 
@@ -111,6 +113,25 @@ def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
         else:
             pyramidal_sample[i] = y
     return pyramidal_sample
+
+
+
+def fourier_nscales(sample, scales = 2, to_numpy = False):
+    pyramidal_sample = {0: sample}
+    stds = [0.5, 0.75, 1, 2, 4, 16, 32]
+    for i in range(1, scales):
+        std = stds[i-1]
+        window = gaussian(41, std = std)
+        window = torch.unsqueeze(window, 0)
+        window = torch.unsqueeze(window, 0)
+        
+        y = F.conv1d(sample, window, padding = "same")
+        
+        pyramidal_sample[i] = y
+    
+    return pyramidal_sample
+
+
 
 def _nested_map(struct, map_fn):
   '''

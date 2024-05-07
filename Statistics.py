@@ -1,22 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import h5py
 
 #%%
 v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))[:30000,0,:]
 v = np.expand_dims(v, 1)
 #%%
-w0 = np.load("/Users/andrei/Desktop/bl/generated_224412_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,0,:]
-w1 = np.load("/Users/andrei/Desktop/bl/generated_224412_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,1,:]
-w2 = np.load("/Users/andrei/Desktop/bl/generated_224412_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,2,:]
-w0 = np.expand_dims(w0, 1)
-w1 = np.expand_dims(w1, 1)
-w2 = np.expand_dims(w2, 1)
-w = np.concatenate((w0, w1, w2), axis = 1)
-w.shape
+w0 = np.load("/Users/andrei/Desktop/bl/samples_30000x1x1800.npz", mmap_mode = "r")["arr_0"]
+w0.shape
+#%%
+
+with h5py.File('/Users/andrei/Desktop/bl/Lagr_u3c_diffusion_1800.h5', 'r') as h5f:
+    u3c = np.array(h5f.get('train'))
+
+w = u3c[:30000,:,0]
 
 #%%
-plt.plot(w[0, 0].flatten())
+plt.plot(w0[0, 0].flatten())
 plt.show()
 #%%
 class Statistics:
@@ -55,8 +56,8 @@ class Statistics:
         return np.array(vals)
 
 #%%
-S = Statistics(v)
-T = Statistics(w)
+S = Statistics(w)
+T = Statistics(w0)
 
 vals_T = T.delta_tau_V(10)
 vals_S = S.delta_tau_V(10)
