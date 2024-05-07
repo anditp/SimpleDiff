@@ -26,7 +26,8 @@ def train_distributed(replica_id, replica_count, port, model_params):
     os.environ['MASTER_PORT'] = str(port)
     torch.distributed.init_process_group('nccl', rank=replica_id, world_size=replica_count)
     dataset = dataset_from_file(model_params["data_path"], model_params["batch_size"], 
-                                model_params["levels"], is_distributed=True, 
+                                model_params["levels"], is_distributed=True,
+                                fourier = (model_params["type"] == "fourier"),
                                 coordinate=model_params.coordinate)
     device = torch.device('cuda', replica_id)
     torch.cuda.set_device(device)
