@@ -1,7 +1,7 @@
 import torch 
 from model import ScIDiff, Simple_Diff, ScIDiff_fourier
 import os
-from data.lagrangian_datatools import dataset_from_file, noise_dataset
+from data.lagrangian_datatools import dataset_from_file
 from learner import ScIDiffLearner
 from torch.nn.parallel import DistributedDataParallel
 import logger
