@@ -67,7 +67,7 @@ class AttentionBlock(nn.Module):
         else:
             self.norm_groups = 3 if channels%3 == 0 else 8
         self.norm = normalization(self.norm_groups, channels)
-        self.qkv = nn.Conv1d(channels, channels * 3, 1)
+        self.qkv = nn.Conv1d(channels, 3 * channels * self.num_heads, 1)
         self.attention = QKVAttention()
         self.proj_out = zero_module(nn.Conv1d(channels, channels, 1))
 

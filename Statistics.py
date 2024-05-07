@@ -6,17 +6,17 @@ import os
 v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))[:30000,0,:]
 v = np.expand_dims(v, 1)
 #%%
-w0 = np.load("/Users/andrei/Desktop/bl/generated_simple_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,0,:]
-w1 = np.load("/Users/andrei/Desktop/bl/generated_simple_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,1,:]
-w2 = np.load("/Users/andrei/Desktop/bl/generated_simple_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,2,:]
+w0 = np.load("/Users/andrei/Desktop/bl/generated_224412_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,0,:]
+w1 = np.load("/Users/andrei/Desktop/bl/generated_224412_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,1,:]
+w2 = np.load("/Users/andrei/Desktop/bl/generated_224412_3d.npy", mmap_mode = "r").transpose((0, 2, 1))[:,2,:]
 w0 = np.expand_dims(w0, 1)
 w1 = np.expand_dims(w1, 1)
 w2 = np.expand_dims(w2, 1)
-
 w = np.concatenate((w0, w1, w2), axis = 1)
+w.shape
 
 #%%
-plt.plot(w[0].flatten())
+plt.plot(w[0, 0].flatten())
 plt.show()
 #%%
 class Statistics:
