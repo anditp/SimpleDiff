@@ -7,6 +7,7 @@ from diffusion import create_beta_schedule
 import numpy as np
 from utils import interpolate_nscales
 from torch.nn import functional as F
+import logger
 
 MIN_VALS = np.array([-9.97037474, -8.63455392, -8.3230226 ])
 MAX_VALS = np.array([ 9.78241835, 10.2621928,   9.73699859])
@@ -47,7 +48,6 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         alpha = 1 - beta
         alpha_cum = np.cumprod(alpha)
         B = model_params.batch_size
-        print(model_params)
         """ 
         T = []
         # compute the aligned diffusion steps for sampling
@@ -66,13 +66,10 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         # random tensor must be of shape (N, num_coords, length + padding)
         x_0 = torch.randn(B, model_params.num_coords, 
                           model_params.traj_len, device=device)
-        print("HERE2")
         gen_x = interpolate_nscales(x_0, scales=model_params.levels)
-        print("HERE3")
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
-            print(t)
             c1 = 1 / alpha[t]**0.5
             c2 = beta[t] / (1 - alpha_cum[t])**0.5
             pred_noise = model(gen_x, torch.tensor([t], device=device))
@@ -94,6 +91,8 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
 
 
 def main(args):
+    logger.configure(dir = "logs")
+    
     # load model params file
     with open(args.params_path) as f:
         config = yaml.load(f, Loader=yaml.SafeLoader) 
@@ -118,7 +117,7 @@ def main(args):
     
     
     for _ in range(N//B):
-        print("Iteration %d \n" % _)
+        logger.log("Iteration %d \n" % _)
         gen_samples = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
         batches_gen.append(gen_samples)
     # concatenate batches in a single one
