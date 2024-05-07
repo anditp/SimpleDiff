@@ -12,7 +12,7 @@ parameters:
   max_steps: 1000000
   model_channels: 30
   num_diff_steps: 800
-  num_heads: 3
+  num_heads: 9
   proj_embed_dim: 512
   scheduler: tanh61
   traj_len: 2000

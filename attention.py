@@ -86,7 +86,7 @@ class QKVAttention(nn.Module):
     A module which performs QKV attention.
     """
 
-    def forward(self, qkv):
+    def forward(self, qkv, channels):
         """
         Apply QKV attention.
 
