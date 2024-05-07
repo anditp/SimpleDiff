@@ -30,11 +30,17 @@ def reverse_minmax_norm(x, coordinate = -1, from_numpy=False):
             return (x + 1) * (MAX_VALS[coordinate] - MIN_VALS[coordinate]) / 2 + MIN_VALS[coordinate]
         return (x + 1) * (torch.tensor(MAX_VALS[coordinate], device=x.device) - torch.tensor(MIN_VALS[coordinate], device=x.device)) / 2 + torch.tensor(MIN_VALS[coordinate], device=x.device)
 
-def generate_trajectories(args, model, model_params, device, fast_sampling=False):
+def generate_trajectories(args, model_params, device, fast_sampling=False):
     """
     Function that generates trajectories from a trained model. It follows Algorithm 2 of the 
     Denoising Diffusion Probabilistic Models paper.
     """
+    # By default we load the weights.pt file from the model directory.
+    chck_path = f"{args.model_dir}/weights.pt"
+    checkpoint = torch.load(chck_path, map_location=device)
+    model = ScIDiff(model_params).to(device=device)
+    model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
+    model.eval()
 
     with torch.no_grad():
         # get noise schedule
@@ -105,17 +111,9 @@ def main(args):
     B = model_params.batch_size
     # generate trajectories, possible to use batches
     batches_gen = []
-    
-    # By default we load the weights.pt file from the model directory.
-    chck_path = f"{args.model_dir}/weights.pt"
-    checkpoint = torch.load(chck_path, map_location=device)
-    model = ScIDiff(model_params).to(device=device)
-    model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
-    model.eval()
-    
     for _ in range(N//B):
         print("Iteration %d \n" % _)
-        gen_samples = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
+        gen_samples = generate_trajectories(args, model_params, device, fast_sampling=args.fast)
         batches_gen.append(gen_samples)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
