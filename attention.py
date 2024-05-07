@@ -62,7 +62,7 @@ class AttentionBlock(nn.Module):
         self.channels = channels
         self.num_heads = num_heads
         
-        self.norm_groups = 3 if channels%3 == 0 else 1
+        self.norm_groups = 3 if channels%3 == 0 else 8
         self.norm = normalization(self.norm_groups, channels)
         self.qkv = nn.Conv1d(channels, 3 * channels * self.num_heads, 1)
         self.attention = QKVAttention()
