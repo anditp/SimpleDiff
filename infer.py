@@ -7,7 +7,6 @@ from diffusion import create_beta_schedule
 import numpy as np
 from utils import interpolate_nscales
 from torch.nn import functional as F
-from torch.nn import DataParallel as DP
 
 MIN_VALS = np.array([-9.97037474, -8.63455392, -8.3230226 ])
 MAX_VALS = np.array([ 9.78241835, 10.2621928,   9.73699859])
@@ -30,17 +29,11 @@ def reverse_minmax_norm(x, coordinate = -1, from_numpy=False):
             return (x + 1) * (MAX_VALS[coordinate] - MIN_VALS[coordinate]) / 2 + MIN_VALS[coordinate]
         return (x + 1) * (torch.tensor(MAX_VALS[coordinate], device=x.device) - torch.tensor(MIN_VALS[coordinate], device=x.device)) / 2 + torch.tensor(MIN_VALS[coordinate], device=x.device)
 
-def generate_trajectories(args, model_params, device, fast_sampling=False):
+def generate_trajectories(args, model, model_params, device, fast_sampling=False):
     """
     Function that generates trajectories from a trained model. It follows Algorithm 2 of the 
     Denoising Diffusion Probabilistic Models paper.
     """
-    # By default we load the weights.pt file from the model directory.
-    chck_path = f"{args.model_dir}/weights.pt"
-    checkpoint = torch.load(chck_path, map_location=device)
-    model = ScIDiff(model_params).to(device=device)
-    model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
-    model.eval()
 
     with torch.no_grad():
         # get noise schedule
@@ -76,6 +69,7 @@ def generate_trajectories(args, model_params, device, fast_sampling=False):
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
+            print(t)
             c1 = 1 / alpha[t]**0.5
             c2 = beta[t] / (1 - alpha_cum[t])**0.5
             pred_noise = model(gen_x, torch.tensor([t], device=device))
@@ -97,7 +91,6 @@ def generate_trajectories(args, model_params, device, fast_sampling=False):
 
 
 def main(args):
-    print("HERE1")
     # load model params file
     with open(args.params_path) as f:
         config = yaml.load(f, Loader=yaml.SafeLoader) 
@@ -113,6 +106,15 @@ def main(args):
     B = model_params.batch_size
     # generate trajectories, possible to use batches
     batches_gen = []
+    
+    # By default we load the weights.pt file from the model directory.
+    chck_path = f"{args.model_dir}/weights.pt"
+    checkpoint = torch.load(chck_path, map_location=device)
+    model = ScIDiff(model_params).to(device=device)
+    model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
+    model.eval()
+    
+    
     for _ in range(N//B):
         print("Iteration %d \n" % _)
         gen_samples = generate_trajectories(args, model_params, device, fast_sampling=args.fast)

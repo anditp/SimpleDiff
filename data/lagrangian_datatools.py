@@ -40,6 +40,25 @@ class ParticleDataset(Dataset):
 
         return part_traj
 
+
+class NoiseDataset(Dataset):
+    def __init__(self, shape, transform = None):
+        super().__init__()
+        self.transform = transform
+        self.shape = shape
+        self.data = torch.randn(*shape)
+    
+    
+    def __len__(self):
+        return self.shape[0]
+    
+    def __getitem__(self, idx):
+        if self.transform:
+            traj = self.data[idx]
+        
+        return traj
+
+
 class ParticleDatasetVx(Dataset):
     def __init__(self, npy_filename, root_dir, transform=None):
 
@@ -202,7 +221,16 @@ def dataset_from_file(npy_fname,
         drop_last=True,
         **kwargs)
     
+
+
+def noise_dataset(shape, batch_size, levels, is_distributed):
+    transforms = [TensorChanFirst()]
+    dataset = NoiseDataset(shape, transforms)
+    return torch.utils.data.DataLoader(dataset, batch_size = batch_size, 
+                                       collate_fn = Collator(levels = levels).collate,
+                                       sampler = DistributedSampler(dataset),
+                                       drop_last = True)
     
-    
+
     
     
