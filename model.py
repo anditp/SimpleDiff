@@ -353,7 +353,102 @@ class ScIDiff_fourier(nn.Module):
     return pred_x_pyramid
 
 
-    
+#%%
+
+
+class Simple_Diff_fourier(nn.Module):
+    """
+    params:
+        model_channels (int): base channel count for the model.
+        levels (int): number of levels or scales of the model.
+        embed_dim(int): Dimension of the encoding vector for each timestep t. Default is 128.
+        proj_embed_dim (int): Dimension of the projection layer. Default is 512.
+
+    """
+    def __init__(self, params):
+        super().__init__()
+        set_params = list(params.keys())
+        self.embed_dim = params.embed_dim if "embed_dim" in set_params else 128
+        self.proj_embed_dim = params.proj_embed_dim if "proj_embed_dim" in set_params else self.embed_dim * 4
+        self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
+        self.levels = params.levels
+        self.in_channels = params.num_coords
+        self.mid_channels = params.model_channels
+        # number of heads for the attention at the convolutions
+        self.conv_num_heads = params.num_heads if (params.attention_at_convs) else -1
+        self.blocks_highest = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                                             ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
+        self.blocks_lowest = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                                             ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
+        
+        blocks = []
+        for i in range(self.levels - 2):
+            blocks_level = nn.ModuleList([
+                ConvBlock(self.in_channels, mid_channels=self.mid_channels ,kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+                ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)
+            ])
+            blocks.append(blocks_level)
+        
+        self.blocks = nn.ModuleList([self.blocks_highest] + blocks + [self.blocks_lowest])
+        
+        # number of heads for the attention at the convolutional blocks outputs
+        self.attention_at_blocks = params.attention_at_blocks
+        if self.attention_at_blocks:
+            self.block_num_heads = params.num_heads
+            self.attention_blocks = nn.ModuleList([AttentionBlock(self.in_channels, num_heads=self.block_num_heads) for _ in range(3)])
+  
+    def forward(self, x_pyramid, diffusion_steps):
+        """ 
+        x_pyramid is a dictionary where the keys are the levels and values are a batch of interpolated trajectories at that level.
+        Each sample has a shape = (1 or 3, length, num_coords) for each level
+        """
+        # compute the projected time embedding
+        time_embed = self.diffusion_embedding(diffusion_steps)
+        pred_x_pyramid = {level: None for level in range(self.levels)}
+        for level in range(self.levels):
+            upper_xpred = None
+            down_xpred = None
+            same_xpred = self.blocks[level][1](x_pyramid[level], time_embed)
+            if self.attention_at_blocks:
+                # apply attention to the output of the same resolution block
+                same_xpred = self.attention_blocks[1](same_xpred)
+
+            pred_x_pyramid[level] = same_xpred if pred_x_pyramid[level] is None else pred_x_pyramid[level] + same_xpred
+            
+            if level > 0 and level < self.levels - 1:
+                # here the lower resolution is talking to/ affecting the resolution above
+                # use upsampling block
+                upper_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    upper_xpred = self.attention_blocks[0](upper_xpred)
+
+                pred_x_pyramid[level-1] = pred_x_pyramid[level-1] + upper_xpred
+                # here the higher resolution is talking to/ affecting the resolution below
+                # use downsampling block
+                down_xpred = self.blocks[level][2](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    down_xpred = self.attention_blocks[2](down_xpred)
+
+                pred_x_pyramid[level+1] = down_xpred if pred_x_pyramid[level+1] is None else pred_x_pyramid[level+1] + down_xpred
+            
+            if level == 0:
+                down_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    down_xpred = self.attention_blocks[2](down_xpred)
+                pred_x_pyramid[1] = down_xpred
+            
+            if level == self.levels - 1:
+                upper_xpred = self.blocks[level][0](x_pyramid[level], time_embed)
+                if self.attention_at_blocks:
+                    # apply attention to the output of the same resolution block
+                    upper_xpred = self.attention_blocks[0](upper_xpred)
+                pred_x_pyramid[level - 1] = pred_x_pyramid[level-1] + upper_xpred
+            
+        return pred_x_pyramid
     
     
     

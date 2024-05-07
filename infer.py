@@ -1,6 +1,6 @@
 import torch
 from argparse import ArgumentParser
-from model import ScIDiff, Simple_Diff, ScIDiff_fourier
+from model import ScIDiff, Simple_Diff, ScIDiff_fourier, Simple_Diff_fourier
 import yaml
 from attrdict import AttrDict
 from diffusion import create_beta_schedule
@@ -111,7 +111,14 @@ def main(args):
     # By default we load the weights.pt file from the model directory.
     chck_path = f"{args.model_dir}/weights.pt"
     checkpoint = torch.load(chck_path, map_location=device)
-    model = ScIDiff(model_params).to(device=device)
+    if model_params.type == "fourier":
+        model = ScIDiff_fourier(model_params).to(device=device)
+    elif model_params.type == "simple":
+        model = Simple_Diff(model_params).to(device=device)
+    elif model_params.type == "simple_fourier":
+        model = Simple_Diff_fourier(model_params).to(device=device)
+    else:
+        model = ScIDiff(model_params).to(device=device)
     model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
     model.eval()
     
