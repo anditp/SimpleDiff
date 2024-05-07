@@ -47,7 +47,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         alpha = 1 - beta
         alpha_cum = np.cumprod(alpha)
         B = model_params.batch_size
-        print("model_params")
+        print(model_params)
         """ 
         T = []
         # compute the aligned diffusion steps for sampling
