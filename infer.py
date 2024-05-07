@@ -38,6 +38,7 @@ def generate_trajectories(args, model_params, device, fast_sampling=False):
     # By default we load the weights.pt file from the model directory.
     chck_path = f"{args.model_dir}/weights.pt"
     checkpoint = torch.load(chck_path, map_location=device)
+    model_params.batch_size = model_params.batch_size // 4
     model = ScIDiff(model_params).to(device=device)
     model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
     model = DP(model, device_ids = [0,1,2,3])
