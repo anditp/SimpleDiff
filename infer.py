@@ -97,6 +97,7 @@ def generate_trajectories(args, model_params, device, fast_sampling=False):
 
 
 def main(args):
+    print("HERE1")
     # load model params file
     with open(args.params_path) as f:
         config = yaml.load(f, Loader=yaml.SafeLoader) 
@@ -107,6 +108,7 @@ def main(args):
     model_params.num_coords = 3 if model_params.coordinate is None else 1
     # set device for inference operations
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("HERE2")
     N = args.num_samples
     B = model_params.batch_size
     # generate trajectories, possible to use batches
