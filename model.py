@@ -121,6 +121,9 @@ class ConvBlock(nn.Module):
             y = self.op(h)
         return y 
 
+
+#%%
+
 class Simple_Diff(nn.Module):
     """
     params:
@@ -217,8 +220,6 @@ class Simple_Diff(nn.Module):
     
 
 #%%
-
-
 
 class ScIDiff(nn.Module):
   """
