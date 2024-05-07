@@ -47,6 +47,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         alpha = 1 - beta
         alpha_cum = np.cumprod(alpha)
         B = model_params.batch_size
+        print("HERE1")
         """ 
         T = []
         # compute the aligned diffusion steps for sampling
@@ -65,7 +66,9 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         # random tensor must be of shape (N, num_coords, length + padding)
         x_0 = torch.randn(B, model_params.num_coords, 
                           model_params.traj_len, device=device)
+        print("HERE2")
         gen_x = interpolate_nscales(x_0, scales=model_params.levels)
+        print("HERE3")
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
@@ -101,7 +104,6 @@ def main(args):
     model_params.num_coords = 3 if model_params.coordinate is None else 1
     # set device for inference operations
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print("HERE2")
     N = args.num_samples
     B = model_params.batch_size
     # generate trajectories, possible to use batches
