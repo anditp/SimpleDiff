@@ -117,7 +117,7 @@ def main(args):
     
     for _ in range(N//B):
         print("Iteration %d \n" % _)
-        gen_samples = generate_trajectories(args, model_params, device, fast_sampling=args.fast)
+        gen_samples = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
         batches_gen.append(gen_samples)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
