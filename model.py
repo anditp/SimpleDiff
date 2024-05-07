@@ -309,7 +309,7 @@ class ScIDiff_fourier(nn.Module):
     self.mid_channels = params.model_channels
     # number of heads for the attention at the convolutions
     self.conv_num_heads = params.num_heads if (params.attention_at_convs) else -1
-    self.blocks = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels ,kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
+    self.blocks = nn.ModuleList([ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
                                  ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads),
                                  ConvBlock(self.in_channels, mid_channels=self.mid_channels, kernel_size=params.kernel_size, res="same", time_embed_dim=self.proj_embed_dim, num_heads=self.conv_num_heads)])
     # number of heads for the attention at the convolutional blocks outputs
