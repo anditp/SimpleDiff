@@ -1,7 +1,7 @@
 parameters:
   attention_at_blocks: true
   attention_at_convs: false
-  batch_size: 192
+  batch_size: 128
   coordinate: -1
   embed_dim: 128
   epochs: 500
