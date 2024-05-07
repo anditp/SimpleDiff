@@ -40,7 +40,6 @@ def generate_trajectories(args, model_params, device, fast_sampling=False):
     checkpoint = torch.load(chck_path, map_location=device)
     model = ScIDiff(model_params).to(device=device)
     model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
-    model = DP(model, device_ids = [0,1,2,3])
     model.eval()
 
     with torch.no_grad():
@@ -107,7 +106,7 @@ def main(args):
     model_params.coordinate = None if model_params.coordinate==-1 else model_params.coordinate
     model_params.num_coords = 3 if model_params.coordinate is None else 1
     # set device for inference operations
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     N = args.num_samples
     B = model_params.batch_size
     # generate trajectories, possible to use batches
