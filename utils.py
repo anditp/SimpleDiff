@@ -24,7 +24,7 @@ SOFTWARE.
 
 from torch import nn
 import torch.nn.functional as F
-from torch.signal.windows import gaussian
+from scipy.ndimage import gaussian_filter1d
 import logger
 import torch
 
@@ -118,16 +118,16 @@ def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
 
 def fourier_nscales(sample, scales = 2, to_numpy = False):
     pyramidal_sample = {0: sample}
-    stds = [0.5, 0.75, 1, 2, 4, 16, 32]
+    stds = [1, 2, 4, 16, 32, 64, 128, 256, 512]
     for i in range(1, scales):
         std = stds[i-1]
-        window = gaussian(41, std = std)
-        window = torch.unsqueeze(window, 0)
-        window = torch.unsqueeze(window, 0)
         
-        y = F.conv1d(sample, window, padding = "same")
+        y = gaussian_filter1d(sample.numpy(), std, mode = "constant", cval = 0.0)
         
-        pyramidal_sample[i] = y
+        if to_numpy:
+            pyramidal_sample[i] = y
+        else:
+            pyramidal_sample[i] = torch.Tensor(y)
     
     return pyramidal_sample
 
