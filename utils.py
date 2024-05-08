@@ -123,7 +123,7 @@ class GaussianSmoother(nn.Module):
 
     def __init__(self, levels):
         super(GaussianSmoother, self).__init__()
-        self.stds = [1, 2, 4, 16, 32, 64, 128]
+        self.stds = [1, 2, 4, 16, 32, 64, 128, 256, 512]
         self.levels = levels
         windows = []
         
