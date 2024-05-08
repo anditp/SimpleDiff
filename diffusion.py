@@ -117,7 +117,7 @@ class GaussianDiffusion:
         
         if fourier:
             levels = len(x_0)
-            noise = torch.randn_like(x_0)
+            noise = torch.randn_like(x_0[0])
             pyramidal_noise = fourier_nscales(noise, scales = levels)
             pyramidal_noise = _nested_map(pyramidal_noise, lambda x: x.to(device))
             for level, trajectory in x_0.items():
