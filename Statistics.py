@@ -4,8 +4,32 @@ import os
 import h5py
 
 #%%
-v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))[:30000,0,:]
-v = np.expand_dims(v, 1)
+v = np.load("/Users/andrei/Desktop/bl/velocities.npy", mmap_mode = "r").transpose((0, 2, 1))
+v.shape
+#%%
+idx = 0
+v1 = np.zeros((327680, 3, 2000))
+
+while idx < 327680:
+    
+    if idx == 320000:
+        v_new = v[idx:]
+    else:
+        v_new = v[idx : idx + 10000]
+    
+    r0 = np.expand_dims(np.amin(v_new, axis = 1), axis = 1)
+    r1 = np.expand_dims(np.amax(v_new, axis = 1), axis = 1)
+    
+    v3 = (v_new - r0) / (r1 - r0) + r0
+    
+    v1[idx : idx + 10000] = v3
+    print(idx, r0.shape, v_new.shape)
+    
+    idx += 10000
+    
+np.save("/Users/andrei/Desktop/bl/velocities_normalized.npy", v1)
+#%%
+v1.shape
 #%%
 w0 = np.load("/Users/andrei/Desktop/bl/samples_30000x1x1800.npz", mmap_mode = "r")["arr_0"]
 w0.shape

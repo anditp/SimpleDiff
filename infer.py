@@ -5,7 +5,7 @@ import yaml
 from attrdict import AttrDict
 from diffusion import create_beta_schedule
 import numpy as np
-from utils import interpolate_nscales
+from utils import interpolate_nscales, fourier_nscales
 from torch.nn import functional as F
 import logger
 
@@ -66,7 +66,10 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         # random tensor must be of shape (N, num_coords, length + padding)
         x_0 = torch.randn(B, model_params.num_coords, 
                           model_params.traj_len, device=device)
-        gen_x = interpolate_nscales(x_0, scales=model_params.levels)
+        if model_params.type in ["fourier", "simple_fourier"]:
+            gen_x = fourier_nscales(x_0, scales=model_params.levels)
+        else:
+            gen_x = interpolate_nscales(x_0, scales=model_params.levels)
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
