@@ -7,6 +7,7 @@ from diffusion import *
 import torch.distributed as dist
 import logger
 from torch.utils.tensorboard import SummaryWriter
+import numpy as np
 
 class ScIDiffLearner:
   def __init__(self, model_dir, model, dataset, optimizer, params, **kwargs):
