@@ -122,7 +122,10 @@ def fourier_nscales(sample, scales = 2, to_numpy = False):
     for i in range(1, scales):
         std = stds[i-1]
         
-        y = gaussian_filter1d(sample.numpy(), std, mode = "constant", cval = 0.0)
+        if torch.is_tensor(sample):
+            y = sample.numpy()
+            
+        y = gaussian_filter1d(y, std, mode = "constant", cval = 0.0)
         
         if to_numpy:
             pyramidal_sample[i] = y
