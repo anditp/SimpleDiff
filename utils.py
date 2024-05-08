@@ -25,6 +25,7 @@ SOFTWARE.
 from torch import nn
 import torch.nn.functional as F
 from scipy.ndimage import gaussian_filter1d
+from scipy.signal.windows import gaussian
 import logger
 import torch
 
@@ -115,29 +116,76 @@ def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
     return pyramidal_sample
 
 
+#%%
 
-def fourier_nscales(sample, scales = 10, to_numpy = False):
-    if torch.is_tensor(sample):
-        pyramidal_sample = {0: sample}
-    else:
-        pyramidal_sample = {0: torch.Tensor(sample)}
-    stds = [1, 2, 4, 16, 32, 64, 128, 256, 512]
-    for i in range(1, scales):
-        std = stds[i-1]
-        
-        if torch.is_tensor(sample):
-            y = sample.numpy()
-        else:
-            y = sample
-            
-        y = gaussian_filter1d(y, std, mode = "constant", cval = 0.0)
-        
-        if to_numpy:
-            pyramidal_sample[i] = y
-        else:
-            pyramidal_sample[i] = torch.Tensor(y)
+class GaussianSmoother(nn.Module):
     
-    return pyramidal_sample
+
+    def __init__(self, levels):
+        super(GaussianSmoother, self).__init__()
+        self.stds = [1, 2, 4, 16, 32, 64, 128]
+        self.levels = levels
+        windows = []
+        
+        for i in range(1, levels):
+            std = self.stds[i-1]
+            window = torch.Tensor(gaussian(4 * std + 1, std))
+            window /= torch.sum(window)
+            window = window.unsqueeze(0)
+            window = window.unsqueeze(0)
+            windows.append(window)
+        
+        self.windows = windows
+        
+
+    def forward(self, input, level):
+        """
+        Apply gaussian filter to input.
+        Arguments:
+            input (torch.Tensor): Input to apply gaussian filter on.
+        Returns:
+            filtered (torch.Tensor): Filtered output.
+        """
+        if level == 0:
+            return input
+        return F.conv1d(input, self.windows[level], padding = "same")
+
+
+
+
+#%%
+
+
+def fourier_nscales(sample, scales = 10, smoother = None, to_numpy = False):
+    if smoother is not None:
+        pyramidal_sample = {}
+        for i in range(scales):
+            pyramidal_sample[i] = smoother(sample, i)
+        
+        return pyramidal_sample
+    
+    else:
+        if torch.is_tensor(sample):
+            pyramidal_sample = {0: sample}
+        else:
+            pyramidal_sample = {0: torch.Tensor(sample)}
+        stds = [1, 2, 4, 16, 32, 64, 128, 256, 512]
+        for i in range(1, scales):
+            std = stds[i-1]
+            
+            if torch.is_tensor(sample):
+                y = sample.numpy()
+            else:
+                y = sample
+                
+            y = gaussian_filter1d(y, std, mode = "constant", cval = 0.0)
+            
+            if to_numpy:
+                pyramidal_sample[i] = y
+            else:
+                pyramidal_sample[i] = torch.Tensor(y)
+        
+        return pyramidal_sample
 
 
 

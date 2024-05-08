@@ -2,7 +2,7 @@ import torch
 from utils import *
 import torch.nn.functional as F
 import math
-from utils import fourier_nscales, _nested_map
+from utils import fourier_nscales, _nested_map, interpolate_nscales
 import numpy as np
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
@@ -103,7 +103,7 @@ class GaussianDiffusion:
         #
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
 
-    def forward_diffusion_process_dict(self, x_0, t, fourier = False, device="cpu"):
+    def forward_diffusion_process_dict(self, x_0, t, fourier = False, smoother = None, device="cpu"):
         """ 
         Takes a dictionary of batches and timesteps as input and returns the noisy version of it.
         Args:
@@ -114,19 +114,22 @@ class GaussianDiffusion:
             dict(torch.Tensor): Noise added to each level.
         """
         noises = {}
+        levels = len(x_0)
         
         if fourier:
-            levels = len(x_0)
             noise = np.random.randn(*x_0[0].shape)
-            pyramidal_noise = fourier_nscales(noise, scales = levels)
+            pyramidal_noise = fourier_nscales(noise, scales = levels, smoother = smoother)
             pyramidal_noise = _nested_map(pyramidal_noise, lambda x: x.to(device))
             for level, trajectory in x_0.items():
                 noisy_traj, noise = self.forward_diffusion_process(trajectory, t, pyramidal_noise[level])
                 x_0[level] = noisy_traj.to(device)
                 noises[level] = noise.to(device)
         else:
+            noise = np.random.randn(*x_0[0].shape)
+            pyramidal_noise = interpolate_nscales(noise, scales = levels)
+            pyramidal_noise = _nested_map(pyramidal_noise, lambda x: x.to(device))
             for level, trajectory in x_0.items():
-                noisy_traj, noise = self.forward_diffusion_process(trajectory, t)
+                noisy_traj, noise = self.forward_diffusion_process(trajectory, t, pyramidal_noise[level])
                 x_0[level] = noisy_traj.to(device)
                 noises[level] = noise.to(device)
         return x_0, noises

@@ -317,6 +317,9 @@ class ScIDiff_fourier(nn.Module):
     if self.attention_at_blocks:
       self.block_num_heads = params.num_heads
       self.attention_blocks = nn.ModuleList([AttentionBlock(self.in_channels, num_heads=self.block_num_heads) for _ in range(3)])
+    
+    self.smoother = GaussianSmoother(self.levels)
+    
   
   def forward(self, x_pyramid, diffusion_steps):
     """ 
