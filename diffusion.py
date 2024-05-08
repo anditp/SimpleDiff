@@ -3,7 +3,7 @@ from utils import *
 import torch.nn.functional as F
 import math
 from utils import fourier_nscales
-import numpy as np
+
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
     """
@@ -117,7 +117,7 @@ class GaussianDiffusion:
         
         if fourier:
             levels = len(x_0)
-            noise = np.random.randn_like(x_0)
+            noise = torch.randn_like(x_0)
             pyramidal_noise = fourier_nscales(noise, scales = levels)
             pyramidal_noise = _nested_map(pyramidal_noise, lambda x: x.to(device))
             for level, trajectory in x_0.items():
