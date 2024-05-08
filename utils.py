@@ -124,6 +124,8 @@ def fourier_nscales(sample, scales = 2, to_numpy = False):
         
         if torch.is_tensor(sample):
             y = sample.numpy()
+        else:
+            y = sample
             
         y = gaussian_filter1d(y, std, mode = "constant", cval = 0.0)
         
