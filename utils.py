@@ -116,7 +116,7 @@ def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
 
 
 
-def fourier_nscales(sample, scales = 2, to_numpy = False):
+def fourier_nscales(sample, scales = 10, to_numpy = False):
     if torch.is_tensor(sample):
         pyramidal_sample = {0: sample}
     else:
