@@ -73,7 +73,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         trajectories = np.split(x_0, model_params.levels, axis = -1)
         gen_x = {}
         for level, noise in enumerate(trajectories):
-            gen_x[level] = noise
+            gen_x[level] = torch.Tensor(noise).to(device)
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
