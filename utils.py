@@ -135,7 +135,7 @@ def fourier_nscales(sample, scales = 2, to_numpy = False):
 
 def _nested_map(struct, map_fn):
   '''
-  With map_fin = lambda x: x.to(device) if isinstance(x, torch.Tensor) else x
+  With map_fn = lambda x: x.to(device) if isinstance(x, torch.Tensor) else x
   this function will dive into an structure until it finds a tensor, and then
   send it to a device.
   Example:
