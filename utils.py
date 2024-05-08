@@ -117,7 +117,10 @@ def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
 
 
 def fourier_nscales(sample, scales = 2, to_numpy = False):
-    pyramidal_sample = {0: sample}
+    if torch.tensor(sample):
+        pyramidal_sample = {0: sample}
+    else:
+        pyramidal_sample = {0: torch.Tensor(sample)}
     stds = [1, 2, 4, 16, 32, 64, 128, 256, 512]
     for i in range(1, scales):
         std = stds[i-1]

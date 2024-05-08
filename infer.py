@@ -66,8 +66,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         # random tensor must be of shape (N, num_coords, length + padding)
         x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
         if model_params.type in ["fourier", "simple_fourier"]:
-            gen_x = fourier_nscales(x_0, scales=model_params.levels)
-            logger.log(gen_x)
+            gen_x = fourier_nscales(x_0, scales = model_params.levels)
             gen_x = _nested_map(gen_x, lambda x: x.to(device))
         else:
             gen_x = interpolate_nscales(x_0, scales=model_params.levels)
