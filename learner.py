@@ -102,7 +102,7 @@ class ScIDiffLearner:
       # create a tensor with random diffusion times for each sample in the batch
       diff_steps = torch.randint(0, self.params.num_diff_steps, (B,), device=device)
       # diffusion process
-      if params.type == "fourier" or params.type == "simple_fourier":
+      if self.params.type == "fourier" or self.params.type == "simple_fourier":
           noisy_batch, noise = self.diffuser.forward_diffusion_process_dict(features, diff_steps, fourier = True, device=device)
       else:
           noisy_batch, noise = self.diffuser.forward_diffusion_process_dict(features, diff_steps, device=device)
