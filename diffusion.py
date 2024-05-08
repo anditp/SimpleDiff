@@ -2,7 +2,7 @@ import torch
 from utils import *
 import torch.nn.functional as F
 import math
-from utils import fourier_nscales
+from utils import fourier_nscales, _nested_map
 import numpy as np
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
