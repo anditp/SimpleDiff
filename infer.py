@@ -93,7 +93,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         gen_full_scale = gen_x[0]
         # remove padding at the last dimension (length)
         #gen_full_scale = gen_full_scale[:, :, 24:-24]
-    return gen_full_scale
+    return gen_x
 
 
 
@@ -133,7 +133,7 @@ def main(args):
     for _ in range(N//B):
         logger.log("Iteration %d \n" % _)
         gen_samples = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
-        batches_gen.append(gen_samples)
+        batches_gen.append(gen_samples[1])
         logger.log(gen_samples.shape)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
