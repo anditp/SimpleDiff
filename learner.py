@@ -111,7 +111,7 @@ class ScIDiffLearner:
       # predicted is also a dictionary with the same structure of noisy_batch and features
       predicted = self.model(noisy_batch, diff_steps)
       # compute loss
-      loss = self.compute_loss(noise, predicted)
+      _, loss = self.compute_loss(noise, predicted)
 
     # backward pass with scaling to avoid underflow gradients
     self.scaler.scale(loss).backward()
@@ -151,7 +151,11 @@ class ScIDiffLearner:
     # compute the loss at the highest level
     loss_accum = self.loss_fn(predictions[0], true_vals[0])
     levels = self.params.levels
+    pred = torch.zeros_like(predictions[0])
     for level in range(1, levels):
       loss_val = self.loss_fn(predictions[level], true_vals[level])
       loss_accum += loss_val
-    return loss_accum/levels
+      pred += predictions[level]
+    
+    loss = self.loss_fn(pred, true_vals[0])
+    return loss_accum/levels, loss
