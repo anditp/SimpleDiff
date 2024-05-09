@@ -89,7 +89,7 @@ class GaussianDiffusion:
         betas (torch.Tensor): Beta values for the diffusion process.
     """
     def __init__(self, betas) -> None:
-        stds = 2 ** torch.arange(0, 10, 1).reshape((1, 10))
+        stds = 2 ** torch.arange(0, 10, 1).reshape((10, 1))
         betas = betas.repeat([10, 1])
         self.betas = betas / stds
         self.alphas = 1. - betas
