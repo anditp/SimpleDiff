@@ -126,13 +126,13 @@ class GaussianDiffusion:
                 noises[level] = noise.to(device)
         else:
             for level, trajectory in x_0.items():
-                noisy_traj, noise = self.forward_diffusion_process(trajectory, t)
+                noisy_traj, noise = self.forward_diffusion_process(trajectory, t, level = level)
                 x_0[level] = noisy_traj.to(device)
                 noises[level] = noise.to(device)
 
         return x_0, noises
     
-    def forward_diffusion_process(self, x_0, t, noise = None):
+    def forward_diffusion_process(self, x_0, t, level = None, noise = None):
         """ 
         Takes a data point (or a batch) and a timestep (or batch of timesteps) 
         as input and returns the noisy version of it.
@@ -142,7 +142,7 @@ class GaussianDiffusion:
             torch.Tensor: Noise added to the data.
         """
         if noise is None:
-            noise = torch.randn_like(x_0)
+            noise = torch.randn_like(x_0) / 2 ** level
         
         sqrt_alphas_cumprod_t = get_index_from_list(self.sqrt_alphas_cumprod, t, x_0.shape)
         sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
