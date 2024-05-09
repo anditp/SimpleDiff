@@ -100,7 +100,7 @@ class GaussianDiffusion:
         self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - self.alphas_cumprod)
         # variance of the posterior q(x_{t-1} | x_t, x_0)
         # according to eq. 7 in Ho et al. (2020)
-        self.posterior_variance = betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
+        #self.posterior_variance = betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
         #
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
 
