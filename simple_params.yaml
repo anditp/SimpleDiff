@@ -2,7 +2,7 @@ parameters:
   attention_at_blocks: false
   attention_at_convs: false
   type: fourier
-  batch_size: 256
+  batch_size: 192
   coordinate: 0
   embed_dim: 128
   epochs: 500
