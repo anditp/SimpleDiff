@@ -134,7 +134,7 @@ def main(args):
         logger.log("Iteration %d \n" % _)
         gen_samples = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
         batches_gen.append(gen_samples[1])
-        logger.log(gen_samples.shape)
+        logger.log(batches_gen[-1].shape)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
     # permute to (N, length, num_coords)
