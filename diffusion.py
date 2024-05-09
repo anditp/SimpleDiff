@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import math
 from utils import fourier_nscales, _nested_map, interpolate_nscales
 import numpy as np
-import torch
 
 def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
     """
@@ -89,18 +88,18 @@ class GaussianDiffusion:
         betas (torch.Tensor): Beta values for the diffusion process.
     """
     def __init__(self, betas) -> None:
-        stds = 2 ** torch.arange(0, 10, 1).reshape((10, 1))
-        betas = betas.repeat([10, 1])
-        self.betas = betas / stds
+        self.betas = betas
         self.alphas = 1. - betas
         # accumulated product of alphas for each time step (1,.., T)
         self.alphas_cumprod = torch.cumprod(self.alphas, axis=0)
+        # and until time t-1 (1,.., t-1)
+        self.alphas_cumprod_prev = F.pad(self.alphas_cumprod[:-1], (1, 0), value=1.0)
         # terms with square root of all the accumulated alphas
         self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
         self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - self.alphas_cumprod)
         # variance of the posterior q(x_{t-1} | x_t, x_0)
         # according to eq. 7 in Ho et al. (2020)
-        #self.posterior_variance = betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
+        self.posterior_variance = betas * (1. - self.alphas_cumprod_prev) / (1. - self.alphas_cumprod)
         #
         self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
 
@@ -122,18 +121,18 @@ class GaussianDiffusion:
             pyramidal_noise = fourier_nscales(noise, scales = levels, smoother = smoother)
             pyramidal_noise = _nested_map(pyramidal_noise, lambda x: x.to(device))
             for level, trajectory in x_0.items():
-                noisy_traj, noise = self.forward_diffusion_process(trajectory, t, level, noise = pyramidal_noise[level])
+                noisy_traj, noise = self.forward_diffusion_process(trajectory, t, noise = pyramidal_noise[level])
                 x_0[level] = noisy_traj.to(device)
                 noises[level] = noise.to(device)
         else:
             for level, trajectory in x_0.items():
-                noisy_traj, noise = self.forward_diffusion_process(trajectory, t, level = level)
+                noisy_traj, noise = self.forward_diffusion_process(trajectory, t)
                 x_0[level] = noisy_traj.to(device)
                 noises[level] = noise.to(device)
 
         return x_0, noises
     
-    def forward_diffusion_process(self, x_0, t, level, noise = None):
+    def forward_diffusion_process(self, x_0, t, noise = None):
         """ 
         Takes a data point (or a batch) and a timestep (or batch of timesteps) 
         as input and returns the noisy version of it.
@@ -143,11 +142,11 @@ class GaussianDiffusion:
             torch.Tensor: Noise added to the data.
         """
         if noise is None:
-            noise = torch.randn_like(x_0) / 2 ** level
+            noise = torch.randn_like(x_0)
         
-        sqrt_alphas_cumprod_t = get_index_from_list(self.sqrt_alphas_cumprod[level], t, x_0.shape)
+        sqrt_alphas_cumprod_t = get_index_from_list(self.sqrt_alphas_cumprod, t, x_0.shape)
         sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
-            self.sqrt_one_minus_alphas_cumprod[level], t, x_0.shape
+            self.sqrt_one_minus_alphas_cumprod, t, x_0.shape
         )
         return sqrt_alphas_cumprod_t * x_0 \
         + sqrt_one_minus_alphas_cumprod_t * noise, noise

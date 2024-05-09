@@ -73,7 +73,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         trajectories = np.split(x_0, model_params.levels, axis = -1)
         gen_x = {}
         for level, noise in enumerate(trajectories):
-            gen_x[level] = torch.Tensor(noise / 2 ** level).to(device)
+            gen_x[level] = torch.Tensor(noise).to(device)
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
@@ -93,7 +93,10 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         gen_full_scale = gen_x[0]
         # remove padding at the last dimension (length)
         #gen_full_scale = gen_full_scale[:, :, 24:-24]
-    return gen_x
+        gen_full = torch.zeros_like(gen_x[0])
+        for level in gen_x.keys():
+            gen_full += gen_x[level]
+    return gen_x, gen_full
 
 
 
@@ -132,15 +135,15 @@ def main(args):
     
     for _ in range(N//B):
         logger.log("Iteration %d \n" % _)
-        gen_samples = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
-        batches_gen.append(gen_samples[0])
+        gen_samples, gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
+        batches_gen.append(gen_full)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
     # permute to (N, length, num_coords)
     gen_samples = gen_samples.permute(0, 2, 1)
     # transform to numpy array
     gen_samples = gen_samples.cpu().numpy()
-    print(gen_samples.shape)
+    logger.log(gen_samples.shape)
     # perform reverse normalization
     if args.normalized:
         gen_samples = reverse_minmax_norm(gen_samples, coordinate=model_params.coordinate, from_numpy=True)
