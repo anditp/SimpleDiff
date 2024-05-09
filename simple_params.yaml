@@ -8,11 +8,11 @@ parameters:
   epochs: 500
   kernel_size: 3
   learning_rate: 0.0001
-  levels: 8
+  levels: 6
   max_grad_norm: 1
   max_steps: 5000000
   model_channels: 8
-  num_diff_steps: 800
+  num_diff_steps: 1000
   num_heads: 0
   proj_embed_dim: 512
   scheduler: tanh61
