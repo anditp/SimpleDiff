@@ -89,6 +89,8 @@ def generate_trajectories_mr(args, model, model_params, device):
                     #sigma = beta[t-1]**0.5
                     gen_x[level] += sigma * noise
                     gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
+                
+                logger.log(gen_x[level])
         
         logger.log(gen_x[level].shape)
 
@@ -198,9 +200,6 @@ def main(args):
     model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
     model.eval()
     
-    logger.log(model(torch.randn(1, model_params.num_coords, model_params.traj_len),
-                     torch.ones(1).long() * 100,
-                     torch.zeros(1, model_params.num_coords, model_params.traj_len)))
     
     for _ in range(N//B):
         logger.log("Iteration %d \n" % _)
