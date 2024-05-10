@@ -111,7 +111,7 @@ class ScIDiffLearner:
       # predicted is also a dictionary with the same structure of noisy_batch and features
       predicted = self.model(noisy_batch, diff_steps)
       # compute loss
-      _, loss = self.compute_loss(noise, predicted)
+      loss = self.compute_loss(noise, predicted)
 
     # backward pass with scaling to avoid underflow gradients
     self.scaler.scale(loss).backward()
@@ -155,7 +155,5 @@ class ScIDiffLearner:
     for level in range(1, levels):
       loss_val = self.loss_fn(predictions[level], true_vals[level])
       loss_accum += loss_val
-      pred += predictions[level] / levels
     
-    loss = self.loss_fn(pred, true_vals[0])
-    return loss_accum/levels, loss
+    return loss_accum/levels

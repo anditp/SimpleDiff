@@ -1,18 +1,18 @@
 parameters:
   attention_at_blocks: false
   attention_at_convs: false
-  type: sci_mr
+  type: fourier
   batch_size: 192
   coordinate: 0
   embed_dim: 128
   epochs: 500
   kernel_size: 3
-  learning_rate: 0.001
+  learning_rate: 0.0001
   levels: 4
   max_grad_norm: 1
   max_steps: 5000000
   model_channels: 128
-  num_diff_steps: 100
+  num_diff_steps: 800
   num_heads: 0
   proj_embed_dim: 512
   scheduler: linear

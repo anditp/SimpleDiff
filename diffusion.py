@@ -116,19 +116,10 @@ class GaussianDiffusion:
         noises = {}
         levels = len(x_0)
         
-        if fourier:
-            noise = np.random.randn(*x_0[0].shape)
-            pyramidal_noise = fourier_nscales(noise, scales = levels, smoother = smoother)
-            pyramidal_noise = _nested_map(pyramidal_noise, lambda x: x.to(device))
-            for level, trajectory in x_0.items():
-                noisy_traj, noise = self.forward_diffusion_process(trajectory, t, noise = pyramidal_noise[level])
-                x_0[level] = noisy_traj.to(device)
-                noises[level] = noise.to(device)
-        else:
-            for level, trajectory in x_0.items():
-                noisy_traj, noise = self.forward_diffusion_process(trajectory, t)
-                x_0[level] = noisy_traj.to(device)
-                noises[level] = noise.to(device)
+        for level, trajectory in x_0.items():
+            noisy_traj, noise = self.forward_diffusion_process(trajectory, t)
+            x_0[level] = noisy_traj.to(device)
+            noises[level] = noise.to(device)
 
         return x_0, noises
     
