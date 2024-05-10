@@ -262,7 +262,7 @@ class MR_Learner:
       
       for level in range(self.params.levels - 1, -1, -1):
           if level == self.params.levels - 1:
-              conditions[0] = torch.zeros_like(features[0])
+              conditions[self.params.levels - 1] = torch.zeros_like(features[0])
           else:
               conditions[level] = features[level + 1]
           with self.autocast:
