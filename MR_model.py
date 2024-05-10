@@ -135,7 +135,6 @@ class Conditioned_denoiser(nn.Module):
         
         self.level_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
 
-        
         self.conditioned_network_block1 = ConvBlock(2 * self.mid_channels, mid_channels = 2 * self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
         self.conditioned_network_block2 = ConvBlock(self.mid_channels, mid_channels = self.mid_channels, out_channels = self.in_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
     
