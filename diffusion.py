@@ -132,7 +132,7 @@ class GaussianDiffusion:
 
         return x_0, noises
     
-    def forward_diffusion_process(self, x_0, t, noise = None):
+    def forward_diffusion_process(self, x_0, t, device = None, noise = None):
         """ 
         Takes a data point (or a batch) and a timestep (or batch of timesteps) 
         as input and returns the noisy version of it.
@@ -148,6 +148,12 @@ class GaussianDiffusion:
         sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
             self.sqrt_one_minus_alphas_cumprod, t, x_0.shape
         )
+        
+        if device is not None:
+            return (sqrt_alphas_cumprod_t * x_0 \
+            + sqrt_one_minus_alphas_cumprod_t * noise).to(device), noise.to(device)
+        
+        
         return sqrt_alphas_cumprod_t * x_0 \
         + sqrt_one_minus_alphas_cumprod_t * noise, noise
         
