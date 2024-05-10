@@ -80,7 +80,6 @@ class ConvBlock(nn.Module):
     """
     def __init__(self, in_channels=1, mid_channels=8, out_channels = 1, kernel_size=3, time_embed_dim=512, **kwargs):
         super().__init__()
-        self.res = res
         self.in_channels = in_channels
         self.time_embed_layers = nn.Sequential(
             nn.Linear(time_embed_dim, mid_channels),
