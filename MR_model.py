@@ -1,4 +1,3 @@
-from utils import *
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,6 +9,8 @@ import torch.distributed as dist
 import logger
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
+from utils import mse_loss, _nested_map
+from tqdm import tqdm
 
 
 def Conv1d(*args, **kwargs):
