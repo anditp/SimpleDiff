@@ -148,6 +148,7 @@ class Conditioned_denoiser(nn.Module):
     
     
     def forward(self, x, t, c):
+        t = self.diffusion_embedding(t)
         d = self.condition_preprocess(c, t)
         h = self.level_preprocess(x, t)
         h = torch.concat((h, d), dim = 1)
