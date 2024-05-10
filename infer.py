@@ -78,7 +78,6 @@ def generate_trajectories_mr(args, model, model_params, device):
             # T-1 steps of denoising
             # we are iterating backwards
             for t in range(len(alpha) - 1, -1, -1):
-                logger.log(t)
                 c1 = 1 / alpha[t]**0.5
                 c2 = beta[t] / (1 - alpha_cum[t])**0.5
                 pred_noise = model(gen_x[level], torch.tensor([t], device=device), condition)
@@ -90,6 +89,8 @@ def generate_trajectories_mr(args, model, model_params, device):
                     #sigma = beta[t-1]**0.5
                     gen_x[level] += sigma * noise
                     gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
+        
+        logger.log(gen_x[level].shape)
 
     return gen_x[0]
 
