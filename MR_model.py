@@ -256,7 +256,7 @@ class MR_Learner:
       noise = {}
       
       for level in range(self.params.levels - 1, -1, -1):
-          noisy_batch[level], noise[level] = self.diffuser.forward_diffusion_process(features, diff_steps, device=device)
+          noisy_batch[level], noise[level] = self.diffuser.forward_diffusion_process(features[level], diff_steps, device=device)
       conditions = {}
       predicted = {}
       
