@@ -247,7 +247,6 @@ class MR_Learner:
       device = features[0].device # device of the batch
       B = features[0].shape[0] # batch size
       loss_acum = 0
-      loss = torch.zeros(1, device = device)
       
       # create a tensor with random diffusion times for each sample in the batch
       diff_steps = torch.randint(0, self.params.num_diff_steps, (B,), device=device)
@@ -270,8 +269,12 @@ class MR_Learner:
             # predicted is also a dictionary with the same structure of noisy_batch and features
             predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level])
             # compute loss
-            loss += self.loss_fn(noise[level], predicted[level])
-            loss_acum += loss.item()
+            if level == level == self.params.levels - 1:
+                loss = self.loss_fn(noise[level], predicted[level])
+            else:
+                loss_val = self.loss_fn(noise[level], predicted[level])
+                loss += loss_val
+            loss_acum += loss_val.item()
     
       # backward pass with scaling to avoid underflow gradients
       self.scaler.scale(loss).backward()
