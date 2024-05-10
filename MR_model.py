@@ -252,8 +252,11 @@ class MR_Learner:
       # create a tensor with random diffusion times for each sample in the batch
       diff_steps = torch.randint(0, self.params.num_diff_steps, (B,), device=device)
       # diffusion process
-      noisy_batch, noise = self.diffuser.forward_diffusion_process_dict(features, diff_steps, device=device)
+      noisy_batch = {}
+      noise = {}
       
+      for level in range(self.params.levels - 1, -1, -1):
+          noisy_batch[level], noise[level] = self.diffuser.forward_diffusion_process(features, diff_steps, device=device)
       conditions = {}
       predicted = {}
       
