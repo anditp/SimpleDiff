@@ -256,15 +256,16 @@ class MR_Learner:
       
       conditions = {}
       predicted = {}
+      
       for level in range(self.params.levels - 1, -1, -1):
           if level == self.params.levels - 1:
-              condition[0] = torch.zeros_like(features[0])
+              conditions[0] = torch.zeros_like(features[0])
           else:
-              condition[level] = features[level + 1]
+              conditions[level] = features[level + 1]
           with self.autocast:
             # forward pass
             # predicted is also a dictionary with the same structure of noisy_batch and features
-            predicted[level] = self.model(noisy_batch[level], diff_steps, condition[level])
+            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level])
             # compute loss
             loss += self.loss_fn(noise[level], predicted[level])
             loss_acum += loss.item()
