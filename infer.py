@@ -199,7 +199,7 @@ def main(args):
     model.eval()
     
     logger.log(model(torch.randn(1, model_params.num_coords, model_params.traj_len),
-                     torch.Tensor([100], dtype = torch.int32),
+                     torch.Tensor(np.array([100]), dtype = torch.int32),
                      torch.zeros(1, model_params.num_coords, model_params.traj_len)))
     
     for _ in range(N//B):
