@@ -71,7 +71,7 @@ def generate_trajectories_mr(args, model, model_params, device):
             gen_x[level] = torch.Tensor(noise).to(device)
             
             if level == model_params.levels - 1:
-                condition = torch.zeros_like(noise)
+                condition = torch.zeros_like(gen_x[level])
             else:
                 condition = gen_x[level + 1]
             # T-1 steps of denoising
