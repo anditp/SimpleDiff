@@ -113,7 +113,7 @@ class ConvBlock(nn.Module):
         h = h + time_embed
         if self.has_attention:
             h = self.attention(h)
-        h = h + self.mid_conv(h)
+        h = self.mid_conv(h)
         h = self.out_conv(h)
         if self.res == "up":
             y = self.op(h, scale_factor=2, mode="nearest")
