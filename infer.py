@@ -83,6 +83,7 @@ def generate_trajectories_mr(args, model, model_params, device):
                 pred_noise = model(gen_x[level], torch.tensor([t], device=device), condition)
                 # denoise
                 gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
+                logger.log(gen_x[level])
                 if t > 0:
                     noise = torch.randn_like(gen_x[level]).to(device)
                     sigma = ((1.0 - alpha_cum[t-1]) / (1.0 - alpha_cum[t]) * beta[t])**0.5
@@ -90,7 +91,6 @@ def generate_trajectories_mr(args, model, model_params, device):
                     gen_x[level] += sigma * noise
                     gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
                 
-                logger.log(gen_x[level])
         
         logger.log(gen_x[level].shape)
 
