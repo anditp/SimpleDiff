@@ -148,7 +148,7 @@ class GaussianSmoother(nn.Module):
         """
         if level == 0:
             return input
-        return F.conv1d(input, self.windows[level], padding = "same")
+        return F.conv1d(input, self.windows[level - 1], padding = "same")
 
 
 
