@@ -262,20 +262,20 @@ class MR_Learner:
             # predicted is also a dictionary with the same structure of noisy_batch and features
             predicted = self.model(noisy_batch, diff_steps, condition)
             # compute loss
-            loss = self.loss_fn(noise, predicted)
+            loss += self.loss_fn(noise, predicted)
             loss_acum += loss.item()
     
-          # backward pass with scaling to avoid underflow gradients
-          self.scaler.scale(loss).backward()
-          # unscale the gradients before clipping them
-          self.scaler.unscale_(self.optimizer)
-          # clip gradients
-          self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-          # update optimizer
-          self.scaler.step(self.optimizer)
-          self.scaler.update()
+      # backward pass with scaling to avoid underflow gradients
+      self.scaler.scale(loss).backward()
+      # unscale the gradients before clipping them
+      self.scaler.unscale_(self.optimizer)
+      # clip gradients
+      self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+      # update optimizer
+      self.scaler.step(self.optimizer)
+      self.scaler.update()
 
-      return loss / self.params.levels
+      return loss_acum / self.params.levels
 
     def _write_summary(self, step, loss):
       """
