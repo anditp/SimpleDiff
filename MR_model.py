@@ -119,7 +119,7 @@ class ConvBlock(nn.Module):
 
 #%%
 
-class Conditioned_denoiser(nn.Module):
+class ScI_MR(nn.Module):
     
     def __init__(self, params):
         super().__init__()
@@ -150,26 +150,6 @@ class Conditioned_denoiser(nn.Module):
         h = self.relu(h)
         h = self.conditioned_network_block2(h, t)
         return h
-
-
-#%%        
-
-class ScI_MR(nn.Module):
-    
-    def __init__(self, params):
-        super().__init__()
-        set_params = list(params.keys())
-        self.embed_dim = params.embed_dim if "embed_dim" in set_params else 128
-        self.proj_embed_dim = params.proj_embed_dim if "proj_embed_dim" in set_params else self.embed_dim * 4
-        self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
-        self.levels = params.levels
-        self.in_channels = params.num_coords
-        self.mid_channels = params.model_channels
-        
-        self.Conditioned_denoiser = Conditioned_denoiser(params)
-    
-    def forward(self, x, t, c):
-        return self.Conditioned_denoiser(x, t, c)
 
 
 
