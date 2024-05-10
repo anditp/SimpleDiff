@@ -2,7 +2,6 @@ from argparse import ArgumentParser
 from torch.cuda import device_count
 from torch.multiprocessing import spawn
 import torch
-from model import ScIDiff_fourier
 
 # Monkey patch collections
 import collections

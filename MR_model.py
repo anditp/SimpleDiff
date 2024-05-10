@@ -180,7 +180,7 @@ class ScI_MR(nn.Module):
 #%%
 
 
-class MR_TrainLoop:
+class MR_Learner:
     def __init__(self, model_dir, model, dataset, optimizer, params, **kwargs):
       os.makedirs(model_dir, exist_ok=True)
       self.model_dir = model_dir
