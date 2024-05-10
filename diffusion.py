@@ -27,7 +27,7 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
     return torch.tensor(betas, dtype=torch.float32)
 
 
-def linear_beta_schedule(timesteps, beta_start=0.0001, beta_end=0.02):
+def linear_beta_schedule(timesteps, beta_start=0.0001, beta_end=0.1):
     """
     Function that returns a linear schedule of beta values for the diffusion process.
     Args:
