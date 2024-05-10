@@ -80,12 +80,12 @@ class ConvBlock(nn.Module):
             nn.Linear(time_embed_dim, mid_channels),
             )
         self.in_conv = nn.Sequential(Conv1d(in_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
-                                     nn.SiLU())
+                                     nn.LeakyReLU(0.1))
         self.has_attention = num_heads > 0
         if self.has_attention:
             self.attention = AttentionBlock(mid_channels, num_heads=num_heads) 
         self.mid_conv = nn.Sequential(Conv1d(mid_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
-                                 nn.SiLU())
+                                 nn.LeakyReLU(0.1))
         self.out_conv = Conv1d(mid_channels, out_channels=in_channels, kernel_size=kernel_size, padding=1)
         if res == "same":
             self.op = nn.Identity()
