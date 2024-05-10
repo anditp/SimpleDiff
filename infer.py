@@ -1,6 +1,7 @@
 import torch
 from argparse import ArgumentParser
 from model import ScIDiff, Simple_Diff, ScIDiff_fourier, Simple_Diff_fourier
+from MR_model import ScI_MR
 import yaml
 from attrdict import AttrDict
 from diffusion import create_beta_schedule
@@ -29,6 +30,66 @@ def reverse_minmax_norm(x, coordinate = -1, from_numpy=False):
         if from_numpy:
             return (x + 1) * (MAX_VALS[coordinate] - MIN_VALS[coordinate]) / 2 + MIN_VALS[coordinate]
         return (x + 1) * (torch.tensor(MAX_VALS[coordinate], device=x.device) - torch.tensor(MIN_VALS[coordinate], device=x.device)) / 2 + torch.tensor(MIN_VALS[coordinate], device=x.device)
+
+
+def generate_trajectories_mr(args, model, model_params, device):
+    
+    
+    with torch.no_grad():
+        # get noise schedule
+        training_noise_schedule = create_beta_schedule(steps=model_params.num_diff_steps, scheduler=model_params.scheduler).numpy()
+        inference_noise_schedule = training_noise_schedule
+
+        talpha = 1 - training_noise_schedule
+        talpha_cum = np.cumprod(talpha)
+
+        beta = inference_noise_schedule
+        alpha = 1 - beta
+        alpha_cum = np.cumprod(alpha)
+        B = model_params.batch_size
+        """ 
+        T = []
+        # compute the aligned diffusion steps for sampling
+        # this is only relevant if we use the fast sampling procedure
+        for s in range(len(inference_noise_schedule)):
+            # eq 14 of the DiffWave paper, appendix B
+            for t in range(len(training_noise_schedule) - 1):
+                if talpha_cum[t+1] <= alpha_cum[s] <= talpha_cum[t]:
+                    twiddle = (talpha_cum[t]**0.5 - alpha_cum[s]**0.5) / (talpha_cum[t]**0.5 - talpha_cum[t+1]**0.5)
+                    T.append(t + twiddle)
+                break
+        
+        T = np.array(T, dtype=np.float32)   
+        """
+        # get random noise vector at several scales
+        # random tensor must be of shape (N, num_coords, length + padding)
+        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len * model_params.levels)
+        trajectories = np.split(x_0, model_params.levels, axis = -1)
+        gen_x = {}
+        for level in range(model_params.levels - 1, -1, -1):
+            noise = trajectories[level]
+            gen_x[level] = torch.Tensor(noise).to(device)
+            
+            if level == model_params.levels - 1:
+                condition = torch.zeros_like(noise)
+            else:
+                condition = gen_x[level + 1]
+            # T-1 steps of denoising
+            # we are iterating backwards
+            for t in range(len(alpha) - 1, -1, -1):
+                c1 = 1 / alpha[t]**0.5
+                c2 = beta[t] / (1 - alpha_cum[t])**0.5
+                pred_noise = model(gen_x[level], torch.tensor([t], device=device), condition)
+                # denoise
+                gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
+                if(t > 0):
+                    noise = torch.randn_like(gen_x[level]).to(device)
+                    sigma = ((1.0 - alpha_cum[t-1]) / (1.0 - alpha_cum[t]) * beta[t])**0.5
+                    #sigma = beta[t-1]**0.5
+                    gen_x[level] += sigma * noise
+                    gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
+
+    return gen_x[0]
 
 def generate_trajectories(args, model, model_params, device, fast_sampling=False):
     """
@@ -127,6 +188,8 @@ def main(args):
         model = Simple_Diff(model_params).to(device=device)
     elif model_params.type == "simple_fourier":
         model = Simple_Diff_fourier(model_params).to(device=device)
+    elif model_params.type == "sci_mr":
+        model = ScI_MR(model_params).to(device=device)
     else:
         model = ScIDiff(model_params).to(device=device)
     model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
@@ -135,8 +198,11 @@ def main(args):
     
     for _ in range(N//B):
         logger.log("Iteration %d \n" % _)
-        gen_samples, gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
-        batches_gen.append(gen_full / model_params.levels)
+        if model_params.type == "sci_mr":
+            gen_full = generate_trajectories_mr(args, model, model_params, device)
+        else:
+            gen_samples, gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
+        batches_gen.append(gen_full)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
     # permute to (N, length, num_coords)

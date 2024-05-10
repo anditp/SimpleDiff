@@ -12,7 +12,7 @@ parameters:
   max_grad_norm: 1
   max_steps: 5000000
   model_channels: 128
-  num_diff_steps: 1000
+  num_diff_steps: 800
   num_heads: 0
   proj_embed_dim: 512
   scheduler: tanh61
