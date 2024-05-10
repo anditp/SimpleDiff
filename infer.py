@@ -67,6 +67,7 @@ def generate_trajectories_mr(args, model, model_params, device):
         trajectories = np.split(x_0, model_params.levels, axis = -1)
         gen_x = {}
         for level in range(model_params.levels - 1, -1, -1):
+            logger.log(level)
             noise = trajectories[level]
             gen_x[level] = torch.Tensor(noise).to(device)
             
