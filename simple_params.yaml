@@ -15,6 +15,6 @@ parameters:
   num_diff_steps: 800
   num_heads: 0
   proj_embed_dim: 512
-  scheduler: linear
+  scheduler: tanh61
   traj_len: 2000
 project: simple_diff
