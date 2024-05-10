@@ -113,7 +113,7 @@ class ConvBlock(nn.Module):
         h = h + time_embed
         h = self.mid_conv(h)
         h = self.out_conv(h)
-        return y
+        return h
 
 
 
