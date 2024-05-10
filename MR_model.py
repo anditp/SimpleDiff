@@ -247,7 +247,7 @@ class MR_Learner:
       device = features[0].device # device of the batch
       B = features[0].shape[0] # batch size
       loss_acum = 0
-      loss = torch.zeros(1)
+      loss = torch.zeros(1, device = device)
       
       for level in range(self.params.levels - 1, -1, -1):
           if level == self.params.levels - 1:
