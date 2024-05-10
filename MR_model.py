@@ -129,30 +129,27 @@ class Conditioned_denoiser(nn.Module):
         self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
         self.in_channels = params.num_coords
         self.mid_channels = params.model_channels
+        self.relu = nn.LeakyReLU(0.1)
         
-        self.condition_preprocess = nn.Sequential(
-            ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim),
-            nn.LeakyReLU(0.1),
-        )
+        self.condition_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
         
-        self.level_preprocess = nn.Sequential(
-            ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim),
-            nn.LeakyReLU(0.1),
-        )
+        self.level_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+
         
-        self.conditioned_network = nn.Sequential(
-            ConvBlock(2 * self.mid_channels, mid_channels = 2 * self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim),
-            nn.LeakyReLU(0.1),
-            ConvBlock(self.mid_channels, mid_channels = self.mid_channels, out_channels = self.in_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim),
-        )
+        self.conditioned_network_block1 = ConvBlock(2 * self.mid_channels, mid_channels = 2 * self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+        self.conditioned_network_block2 = ConvBlock(self.mid_channels, mid_channels = self.mid_channels, out_channels = self.in_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
     
     
     def forward(self, x, t, c):
         t = self.diffusion_embedding(t)
         d = self.condition_preprocess(c, t)
+        d = self.relu(d)
         h = self.level_preprocess(x, t)
+        h = self.relu(h)
         h = torch.concat((h, d), dim = 1)
-        h = self.conditioned_network(h, t)
+        h = self.conditioned_network_block1(h, t)
+        h = self.relu(h)
+        h = self.conditioned_network_block2(h, t)
         return h
 
 
