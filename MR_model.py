@@ -271,8 +271,8 @@ class MR_Learner:
       B = features[0].shape[0] # batch size
       loss_acum = 0
       
-      for level in range(self.levels - 1, -1, -1):
-          if level == self.levels - 1:
+      for level in range(self.model.levels - 1, -1, -1):
+          if level == self.model.levels - 1:
               condition = torch.zeros_like(features[0])
           else:
               condition = features[level + 1]
