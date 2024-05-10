@@ -83,7 +83,7 @@ def generate_trajectories_mr(args, model, model_params, device):
                 pred_noise = model(gen_x[level], torch.tensor([t], device=device), condition)
                 # denoise
                 gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
-                if(t > 0):
+                if t > 0:
                     noise = torch.randn_like(gen_x[level]).to(device)
                     sigma = ((1.0 - alpha_cum[t-1]) / (1.0 - alpha_cum[t]) * beta[t])**0.5
                     #sigma = beta[t-1]**0.5
@@ -198,6 +198,9 @@ def main(args):
     model.load_state_dict(checkpoint["model"]) # if the params settings do not match with the checkpoint, this will fail
     model.eval()
     
+    logger.log(model(torch.randn(1, model_params.num_coords, model_params.traj_len),
+                     100,
+                     torch.zeros(1, model_params.num_coords, model_params.traj_len)))
     
     for _ in range(N//B):
         logger.log("Iteration %d \n" % _)
