@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from torch.utils.data.distributed import DistributedSampler
 from torchvision.transforms import Compose
 sys.path.append('../')
-from utils import interpolate_nscales, fourier_nscales
+from utils import interpolate_nscales, fourier_nscales, GaussianSmoother
 import logger
 
 
@@ -196,7 +196,7 @@ class Collator_fourier:
 
         trajectories = torch.stack(minibatch, dim=0)
         # get a dictionary with the batch rescaled to the different levels
-        batch_fourier = fourier_nscales(trajectories, scales=self.levels)
+        batch_fourier = fourier_nscales(trajectories, scales=self.levels, smoother = GaussianSmoother(self.levels))
         return batch_fourier
 
     
