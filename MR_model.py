@@ -271,6 +271,7 @@ class MR_Learner:
             # compute loss
             if level == level == self.params.levels - 1:
                 loss = self.loss_fn(noise[level], predicted[level])
+                loss_val = loss
             else:
                 loss_val = self.loss_fn(noise[level], predicted[level])
                 loss += loss_val
