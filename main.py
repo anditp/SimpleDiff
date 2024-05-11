@@ -40,7 +40,7 @@ def main(args):
     model_params.num_coords = 3 if model_params.coordinate is None else 1
     logger.log(model_params)
     # dump config file to experiment directory
-    with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
+    with open(os.path.join(args.experiment_dir,"simple_params.yaml"), "w") as f:
         yaml.dump(config, f)
     
     
