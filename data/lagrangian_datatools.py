@@ -246,7 +246,6 @@ def dataset_from_file(npy_fname,
     else:
         col = Collator(levels = levels)
     
-    logger.log(fourier)
     
     return torch.utils.data.DataLoader(
         dataset,

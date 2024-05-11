@@ -43,8 +43,6 @@ def main(args):
     with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
         yaml.dump(config, f)
     
-    model = ScI_MR(model_params)
-    logger.log(model)
     
     if replica_count > 1:
         if model_params.batch_size % replica_count != 0:
