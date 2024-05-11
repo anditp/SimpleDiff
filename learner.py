@@ -153,7 +153,7 @@ class ScIDiffLearner:
     levels = self.params.levels
     pred = torch.zeros_like(predictions[0])
     for level in range(1, levels):
-      loss_val = self.loss_fn(predictions[level], true_vals[level])
+      loss_val = self.loss_fn(predictions[level], true_vals[level]) + self.loss_fn(predictions[level][..., -1], predictions[level][..., 1:])
       loss_accum += loss_val
     
     return loss_accum/levels
