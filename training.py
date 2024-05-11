@@ -45,7 +45,7 @@ def train_distributed(replica_id, replica_count, port, model_params):
     elif model_params.type == "sci_mr":
         model = ScI_MR(model_params).to(device)
     else:
-        model = ScIDiff_fourier(model_params).to(device)
+        model = ScIDiff(model_params).to(device)
     model = DistributedDataParallel(model, device_ids=[replica_id])
     _train_impl(replica_id, model, dataset, model_params)
 
