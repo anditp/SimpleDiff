@@ -148,7 +148,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
             # denoise at every scale
             for level, v in pred_noise.items():
                 gen_x[level] = c1 * (gen_x[level] - c2 * v)
-                if t >= 0:
+                if t > 0:
                     noise = torch.randn_like(gen_x[level]).to(device)
                     sigma = ((1.0 - alpha_cum[t-1]) / (1.0 - alpha_cum[t]) * beta[t])**0.5
                     #sigma = beta[t-1]**0.5
@@ -157,7 +157,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
 
         # remove padding at the last dimension (length)
         #gen_full_scale = gen_full_scale[:, :, 24:-24]
-    return gen_x[0]
+    return gen_x[3]
 
 
 
