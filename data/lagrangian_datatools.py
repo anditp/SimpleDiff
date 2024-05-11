@@ -238,10 +238,7 @@ def dataset_from_file(npy_fname,
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
     
-    if fourier:
-        col = Collator_fourier(levels = levels)
-    else:
-        col = Collator(levels = levels)
+    col = Collator_fourier(levels = levels)
     
     
     return torch.utils.data.DataLoader(
