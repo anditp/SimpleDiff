@@ -1,7 +1,7 @@
 parameters:
   attention_at_blocks: false
   attention_at_convs: false
-  type: fourier
+  type: simple_fourier
   batch_size: 192
   coordinate: 0
   embed_dim: 128
@@ -11,7 +11,7 @@ parameters:
   levels: 4
   max_grad_norm: 1
   max_steps: 5000000
-  model_channels: 128
+  model_channels: 32
   num_diff_steps: 800
   num_heads: 0
   proj_embed_dim: 512
