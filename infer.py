@@ -63,8 +63,8 @@ def generate_trajectories_mr(args, model, model_params, device):
         """
         # get random noise vector at several scales
         # random tensor must be of shape (N, num_coords, length + padding)
-        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
-        trajectories = [x_0] * model_params.levels
+        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len * model_params.levels)
+        trajectories = np.split(x_0, model_params.levels, axis = -1)
         gen_x = {}
         for level in range(model_params.levels - 1, -1, -1):
             logger.log(level)
@@ -129,13 +129,13 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         """
         # get random noise vector at several scales
         # random tensor must be of shape (N, num_coords, length + padding)
-        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len * model_params.levels)
+        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
         #if model_params.type in ["fourier", "simple_fourier"]:
          #   gen_x = fourier_nscales(x_0, scales = model_params.levels)
           #  gen_x = _nested_map(gen_x, lambda x: x.to(device))
         #else:
          #   gen_x = interpolate_nscales(x_0, scales=model_params.levels)
-        trajectories = np.split(x_0, model_params.levels, axis = -1)
+        trajectories = [x_0] * model_params.levels
         gen_x = {}
         for level, noise in enumerate(trajectories):
             gen_x[level] = torch.Tensor(noise).to(device)
