@@ -144,7 +144,8 @@ class ToTensor(object):
         # return scalar type float32
         # which is the default type for model weights
         return torch.from_numpy(sample).float()
-    
+
+
 class Collator:
     def __init__(self, levels):
         # levels is the number of scales for the interpolation
@@ -165,10 +166,6 @@ class Collator:
         """        
 
         trajectories = torch.stack(minibatch, dim=0)
-        # we have to pad the trajectories to the closest power of 2
-        # which is 2048
-        if self.levels > 4:
-            trajectories = F.pad(trajectories, (24,24), value=0)
         # get a dictionary with the batch rescaled to the different levels
         batch_interp = interpolate_nscales(trajectories, scales=self.levels)
         return batch_interp
@@ -241,10 +238,7 @@ def dataset_from_file(npy_fname,
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
     
-    if fourier:
-        col = Collator_fourier(levels = levels)
-    else:
-        col = Collator(levels = levels)
+    col = Collator_fourier(levels = levels)
     
     
     return torch.utils.data.DataLoader(
