@@ -129,16 +129,16 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
         """
         # get random noise vector at several scales
         # random tensor must be of shape (N, num_coords, length + padding)
-        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
-        if model_params.type in ["fourier", "simple_fourier"]:
-            gen_x = fourier_nscales(x_0, scales = model_params.levels)
-            gen_x = _nested_map(gen_x, lambda x: x.to(device))
+        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len * model_params.levels)
+        #if model_params.type in ["fourier", "simple_fourier"]:
+         #   gen_x = fourier_nscales(x_0, scales = model_params.levels)
+          #  gen_x = _nested_map(gen_x, lambda x: x.to(device))
         #else:
          #   gen_x = interpolate_nscales(x_0, scales=model_params.levels)
-        #trajectories = np.split(x_0, model_params.levels, axis = -1)
-        #gen_x = {}
-        #for level, noise in enumerate(trajectories):
-         #   gen_x[level] = torch.Tensor(noise).to(device)
+        trajectories = np.split(x_0, model_params.levels, axis = -1)
+        gen_x = {}
+        for level, noise in enumerate(trajectories):
+            gen_x[level] = torch.Tensor(noise).to(device)
         # T-1 steps of denoising
         # we are iterating backwards
         for t in range(len(alpha) - 1, -1, -1):
@@ -148,20 +148,16 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
             # denoise at every scale
             for level, v in pred_noise.items():
                 gen_x[level] = c1 * (gen_x[level] - c2 * v)
-                if(t > 0):
+                if t >= 0:
                     noise = torch.randn_like(gen_x[level]).to(device)
                     sigma = ((1.0 - alpha_cum[t-1]) / (1.0 - alpha_cum[t]) * beta[t])**0.5
                     #sigma = beta[t-1]**0.5
                     gen_x[level] += sigma * noise
                     gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
 
-        gen_full_scale = gen_x[0]
         # remove padding at the last dimension (length)
         #gen_full_scale = gen_full_scale[:, :, 24:-24]
-        gen_full = torch.zeros_like(gen_x[0])
-        for level in gen_x.keys():
-            gen_full += gen_x[level]
-    return gen_x, gen_full
+    return gen_x[0]
 
 
 
@@ -205,7 +201,7 @@ def main(args):
         if model_params.type == "sci_mr":
             gen_full = generate_trajectories_mr(args, model, model_params, device)
         else:
-            gen_samples, gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
+            gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
         batches_gen.append(gen_full)
     # concatenate batches in a single one
     gen_samples = torch.cat(batches_gen, dim=0)
