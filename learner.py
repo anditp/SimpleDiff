@@ -151,9 +151,9 @@ class ScIDiffLearner:
     # compute the loss at the highest level
     loss_accum = self.loss_fn(predictions[0], true_vals[0])
     levels = self.params.levels
-    pred = torch.zeros_like(predictions[0])
     for level in range(1, levels):
-      loss_val = self.loss_fn(predictions[level], true_vals[level]) + 0.1 * self.loss_fn(predictions[level][..., -1], predictions[level][..., 1:])
+      loss_val = self.loss_fn(predictions[level], true_vals[level]) +\
+              0.1 * self.loss_fn((predictions[level] - true_vals[level])[..., -1], (predictions[level] - true_vals[level])[..., 1:])
       loss_accum += loss_val
     
     return loss_accum/levels
