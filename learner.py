@@ -152,8 +152,7 @@ class ScIDiffLearner:
     loss_accum = self.loss_fn(predictions[0], true_vals[0])
     levels = self.params.levels
     for level in range(1, levels):
-      loss_val = self.loss_fn(predictions[level], true_vals[level]) +\
-              0.1 * self.loss_fn((predictions[level] - true_vals[level])[..., -1], (predictions[level] - true_vals[level])[..., 1:])
+      loss_val = self.loss_fn(predictions[level], true_vals[level])
       loss_accum += loss_val
     
     return loss_accum/levels
