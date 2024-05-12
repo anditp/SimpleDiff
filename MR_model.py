@@ -154,6 +154,31 @@ class ScI_MR(nn.Module):
 
 
 
+class MR(nn.Module):
+    
+    def __init__(self, params):
+        super().__init__()
+        set_params = list(params.keys())
+        self.embed_dim = params.embed_dim if "embed_dim" in set_params else 128
+        self.proj_embed_dim = params.proj_embed_dim if "proj_embed_dim" in set_params else self.embed_dim * 4
+        self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
+        self.in_channels = params.num_coords
+        self.mid_channels = params.model_channels
+        
+        blocks = []
+        
+        for i in range(self.params.levels):
+            blocks.append(ScI_MR(self.params))
+        
+        self.blocks = nn.ModuleList(blocks)
+    
+    
+    def forward(self, x, t, c, level):
+        return self.blocks[level](x, t, c)
+
+
+
+
 #%%
 
 
@@ -266,7 +291,7 @@ class MR_Learner:
           with self.autocast:
             # forward pass
             # predicted is also a dictionary with the same structure of noisy_batch and features
-            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level])
+            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level], level)
             # compute loss
             loss = self.loss_fn(noise[level], predicted[level])
             if level == self.params.levels - 1:
@@ -285,6 +310,7 @@ class MR_Learner:
       self.scaler.update()
 
       return loss_acum / self.params.levels
+
 
     def _write_summary(self, step, loss):
       """
