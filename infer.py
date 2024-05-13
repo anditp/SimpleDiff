@@ -153,7 +153,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
 
         # remove padding at the last dimension (length)
         #gen_full_scale = gen_full_scale[:, :, 24:-24]
-    return gen_x[0]
+    return gen_x[1]
 
 
 
