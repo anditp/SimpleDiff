@@ -3,7 +3,7 @@ parameters:
   attention_at_convs: false
   type: simple
   batch_size: 192
-  coordinate: 0
+  coordinate: -1
   embed_dim: 128
   epochs: 500
   kernel_size: 3
