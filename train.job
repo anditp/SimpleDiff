@@ -4,7 +4,7 @@
 
 #SBATCH --nodelist=titanic-2
 #SBATCH --partition=titanic
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:3
 #SBATCH -t 1-00:00:00
 #SBATCH --job-name=simple_diff
 #SBATCH --cpus-per-task=8
