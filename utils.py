@@ -28,6 +28,7 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal.windows import gaussian
 import logger
 import torch
+import logger
 
 def get_index_from_list(vals, t, x_shape):
     """ 

@@ -233,7 +233,7 @@ def dataset_from_file(npy_fname,
     # read 3D trajectories
     # usual transformations are ToTensor() and permute(1, 0)
     # to get channel-first tensors
-    transforms = [ToTensor(), TensorChanFirst()]
+    transforms = [ToTensor()]
     if coordinate is not None:
         transforms.append(TakeOneCoord(coord=coordinate))
     dataset = ParticleDataset(npy_fname, transform=Compose(transforms))
