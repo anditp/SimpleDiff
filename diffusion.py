@@ -113,11 +113,12 @@ class GaussianDiffusion:
             dict(torch.Tensor): Noisy data.
             dict(torch.Tensor): Noise added to each level.
         """
-        noises = {}
         levels = len(x_0)
+        noise = torch.randn_like(x_0[0])
+        noises = interpolate_nscales(noise, scales = levels)
         
         for level, trajectory in x_0.items():
-            noisy_traj, noise = self.forward_diffusion_process(trajectory, t)
+            noisy_traj, noise = self.forward_diffusion_process(trajectory, t, noise = noises[level])
             x_0[level] = noisy_traj.to(device)
             noises[level] = noise.to(device)
 
