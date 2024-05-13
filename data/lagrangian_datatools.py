@@ -250,6 +250,7 @@ def dataset_from_file(npy_fname,
         collate_fn= col.collate,
         shuffle=not is_distributed,
         sampler=DistributedSampler(dataset) if is_distributed else None,
+        pin_memory = True,
         drop_last=True,
         **kwargs)
     
