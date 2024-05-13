@@ -1,7 +1,7 @@
 parameters:
-  attention_at_blocks: false
+  attention_at_blocks: true
   attention_at_convs: false
-  type: simple_fourier
+  type: simple
   batch_size: 192
   coordinate: 0
   embed_dim: 128
@@ -13,7 +13,7 @@ parameters:
   max_steps: 5000000
   model_channels: 32
   num_diff_steps: 800
-  num_heads: 0
+  num_heads: 1
   proj_embed_dim: 512
   scheduler: tanh61
   traj_len: 2000
