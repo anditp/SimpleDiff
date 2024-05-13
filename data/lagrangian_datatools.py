@@ -233,6 +233,8 @@ def dataset_from_file(npy_fname,
     # read 3D trajectories
     # usual transformations are ToTensor() and permute(1, 0)
     # to get channel-first tensors
+    file = np.load(npy_fname, mmap_mode="r")
+    logger.log(file[0].shape)
     transforms = [ToTensor(), TensorChanFirst()]
     if coordinate is not None:
         transforms.append(TakeOneCoord(coord=coordinate))
