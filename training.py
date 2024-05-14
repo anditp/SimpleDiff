@@ -16,7 +16,7 @@ def _train_impl(replica_id, model, dataset, params):
     elif params.type == "mr":
         opts = {}
         for i in range(params.level):
-            opts[i] = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
+            opts[i] = torch.optim.Adam(model[i].parameters(), lr=params.learning_rate)
         learner = MR_Full_Learner(params.model_dir, model, dataset, opts, params)
     else:
         learner = ScIDiffLearner(params.model_dir, model, dataset, opt, params)
@@ -53,6 +53,9 @@ def train_distributed(replica_id, replica_count, port, model_params):
         models = {}
         for level in range(model_params.levels):
             models[level] = ScI_MR(model_params).to(device)
+            models[level] = DistributedDataParallel(models[level], device_ids=[replica_id])
+        _train_impl(replica_id, models, dataset, model_params)
+        return
     else:
         model = ScIDiff(model_params).to(device)
     model = DistributedDataParallel(model, device_ids=[replica_id])
