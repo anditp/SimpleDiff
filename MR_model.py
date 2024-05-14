@@ -365,7 +365,7 @@ class MR_Full_Learner:
               'model': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in model_state.items() },
               'optimizer': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in self.optimizers[level].state_dict().items() },
               'params': dict(self.params),
-              'scaler': self.scaler.state_dict(),
+              'scaler': self.scalers[level].state_dict(),
             }
         return state_dict
 
