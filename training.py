@@ -9,17 +9,22 @@ import logger
 
 def _train_impl(replica_id, model, dataset, params):
     torch.backends.cudnn.benchmark = True
-    opt = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
     
-    if params.type == "sci_mr":
-        learner = MR_Learner(params.model_dir, model, dataset, opt, params)
-    elif params.type == "mr":
+    if params.type == "mr":
         opts = {}
         for i in range(params.level):
             opts[i] = torch.optim.Adam(model[i].parameters(), lr=params.learning_rate)
         learner = MR_Full_Learner(params.model_dir, model, dataset, opts, params)
+        
     else:
-        learner = ScIDiffLearner(params.model_dir, model, dataset, opt, params)
+        opt = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
+        
+        if params.type == "sci_mr":
+            learner = MR_Learner(params.model_dir, model, dataset, opt, params)
+            
+        else:
+            learner = ScIDiffLearner(params.model_dir, model, dataset, opt, params)
+    
     learner.is_master = (replica_id == 0)
     learner.restore_from_checkpoint()
     learner.train(max_steps=params.max_steps)
