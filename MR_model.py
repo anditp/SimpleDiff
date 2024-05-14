@@ -290,7 +290,7 @@ class MR_Learner:
               if self.step % 10000 < 5000:
                   conditions[level] = features[level]
               else:
-                  conditions[level] = predicted[level - 1]
+                  conditions[level] = predicted[level + 1]
             
           with self.autocast:
             # forward pass
