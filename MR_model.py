@@ -287,7 +287,7 @@ class MR_Learner:
           if level == self.params.levels - 1:
               conditions[self.params.levels - 1] = torch.zeros_like(features[0])
           else:
-              if self.step % 10000 > 5000:
+              if self.step % 10000 < 5000:
                   conditions[level] = features[level]
               else:
                   conditions[level] = predicted[level + 1].detach().to(device)

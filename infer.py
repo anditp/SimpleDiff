@@ -63,8 +63,8 @@ def generate_trajectories_mr(args, model, model_params, device):
         """
         # get random noise vector at several scales
         # random tensor must be of shape (N, num_coords, length + padding)
-        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len * model_params.levels)
-        trajectories = np.split(x_0, model_params.levels, axis = -1)
+        x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
+        trajectories = [x_0] * model_params.levels
         gen_x = {}
         for level in range(model_params.levels - 1, -1, -1):
             logger.log(level)
