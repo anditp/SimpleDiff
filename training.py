@@ -12,7 +12,7 @@ def _train_impl(replica_id, model, dataset, params):
     
     if params.type == "mr":
         opts = {}
-        for i in range(params.level):
+        for i in range(params.levels):
             opts[i] = torch.optim.Adam(model[i].parameters(), lr=params.learning_rate)
         learner = MR_Full_Learner(params.model_dir, model, dataset, opts, params)
         
