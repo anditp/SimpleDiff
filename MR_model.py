@@ -292,7 +292,7 @@ class MR_Learner:
               if self.step % 10000 < 5000:
                   conditions[level] = features[level]
               else:
-                  conditions[level] = predicted[level + 1].detach().to(device)
+                  conditions[level] = predicted[level + 1].detach().clone().to(device)
             
           with self.autocast:
             # forward pass
