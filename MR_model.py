@@ -295,7 +295,7 @@ class MR_Learner:
           with self.autocast:
             # forward pass
             # predicted is also a dictionary with the same structure of noisy_batch and features
-            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level], level)
+            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level])
             # compute loss
             loss = self.loss_fn(noise[level], predicted[level])
             if level == self.params.levels - 1:
