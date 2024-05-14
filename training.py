@@ -51,7 +51,7 @@ def train_distributed(replica_id, replica_count, port, model_params):
         model = ScI_MR(model_params).to(device)
     elif model_params.type == "mr":
         models = {}
-        for i in range(model_params.levels):
+        for level in range(model_params.levels):
             models[level] = ScI_MR(model_params).to(device)
     else:
         model = ScIDiff(model_params).to(device)
