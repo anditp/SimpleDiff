@@ -165,6 +165,7 @@ class MR(nn.Module):
         self.in_channels = params.num_coords
         self.mid_channels = params.model_channels
         self.levels = params.levels
+        self.params = params
         
         blocks = []
         
