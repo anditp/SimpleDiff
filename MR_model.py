@@ -287,7 +287,7 @@ class MR_Learner:
           if level == self.params.levels - 1:
               conditions[self.params.levels - 1] = torch.zeros_like(features[0])
           else:
-              conditions[level] = features[level + 1]
+              conditions[level] = prediction
           with self.autocast:
             # forward pass
             # predicted is also a dictionary with the same structure of noisy_batch and features
@@ -298,16 +298,18 @@ class MR_Learner:
                 loss_acum = loss
             else:
                 loss_acum += loss
+            
+            prediction = predicted[level]
     
-      # backward pass with scaling to avoid underflow gradients
-      self.scaler.scale(loss).backward()
-      # unscale the gradients before clipping them
-      self.scaler.unscale_(self.optimizer)
-      # clip gradients
-      self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-      # update optimizer
-      self.scaler.step(self.optimizer)
-      self.scaler.update()
+          # backward pass with scaling to avoid underflow gradients
+          self.scaler.scale(loss).backward()
+          # unscale the gradients before clipping them
+          self.scaler.unscale_(self.optimizer)
+          # clip gradients
+          self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+          # update optimizer
+          self.scaler.step(self.optimizer)
+          self.scaler.update()
 
       return loss_acum / self.params.levels
 
