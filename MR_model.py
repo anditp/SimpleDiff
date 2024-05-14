@@ -287,7 +287,11 @@ class MR_Learner:
           if level == self.params.levels - 1:
               conditions[self.params.levels - 1] = torch.zeros_like(features[0])
           else:
-              conditions[level] = prediction
+              if self.step % 10000 < 5000:
+                  conditions[level] = features[level]
+              else:
+                  conditions[level] = predicted[level - 1]
+            
           with self.autocast:
             # forward pass
             # predicted is also a dictionary with the same structure of noisy_batch and features
@@ -299,7 +303,6 @@ class MR_Learner:
             else:
                 loss_acum += loss
             
-            prediction = predicted[level]
     
           # backward pass with scaling to avoid underflow gradients
           self.scaler.scale(loss).backward()
