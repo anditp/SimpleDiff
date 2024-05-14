@@ -357,13 +357,13 @@ class MR_Full_Learner:
         state_dict = {}
         for level in range(self.levels):
             if hasattr(self.models[level], 'module') and isinstance(self.models[level].module, nn.Module):
-                model_state[level] = self.models[level].module.state_dict()
+                model_state = self.models[level].module.state_dict()
             else:
-                model_state[level] = self.models[level].state_dict()
+                model_state = self.models[level].state_dict()
             state_dict[level] = {
               'step': self.step,
               'model': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in model_state.items() },
-              'optimizer': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in self.optimizer.state_dict().items() },
+              'optimizer': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in self.optimizers[level].state_dict().items() },
               'params': dict(self.params),
               'scaler': self.scaler.state_dict(),
             }
