@@ -164,10 +164,11 @@ class MR(nn.Module):
         self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
         self.in_channels = params.num_coords
         self.mid_channels = params.model_channels
+        self.levels = params.levels
         
         blocks = []
         
-        for i in range(self.params.levels):
+        for i in range(self.levels):
             blocks.append(ScI_MR(self.params))
         
         self.blocks = nn.ModuleList(blocks)
