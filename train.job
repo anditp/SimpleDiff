@@ -2,7 +2,7 @@
 
 # This is a job script, which was used for training the ScIDiff model
 
-#SBATCH --nodelist=titanic-2
+#SBATCH --nodelist=pacific-1
 #SBATCH --partition=titanic
 #SBATCH --gres=gpu:3
 #SBATCH -t 1-00:00:00
