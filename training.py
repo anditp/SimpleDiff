@@ -11,7 +11,7 @@ def _train_impl(replica_id, model, dataset, params):
     torch.backends.cudnn.benchmark = True
     opt = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
     
-    if params.type == "sci_mr":
+    if params.type == "sci_mr" or params.type == "mr":
         learner = MR_Learner(params.model_dir, model, dataset, opt, params)
     else:
         learner = ScIDiffLearner(params.model_dir, model, dataset, opt, params)
@@ -44,6 +44,8 @@ def train_distributed(replica_id, replica_count, port, model_params):
         model = Simple_Diff_fourier(model_params).to(device)
     elif model_params.type == "sci_mr":
         model = ScI_MR(model_params).to(device)
+    elif model_params.type == "mr":
+        model = MR(model_params).to(device)
     else:
         model = ScIDiff(model_params).to(device)
     model = DistributedDataParallel(model, device_ids=[replica_id])

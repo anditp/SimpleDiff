@@ -303,18 +303,18 @@ class MR_Learner:
             else:
                 loss_acum += loss
             
-    
-          # backward pass with scaling to avoid underflow gradients
-          self.scaler.scale(loss).backward()
-          # unscale the gradients before clipping them
-          self.scaler.unscale_(self.optimizer)
-          # clip gradients
-          self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-          # update optimizer
-          self.scaler.step(self.optimizer)
-          self.scaler.update()
+      loss_acum /= self.params.levels
+      # backward pass with scaling to avoid underflow gradients
+      self.scaler.scale(loss_acum).backward()
+      # unscale the gradients before clipping them
+      self.scaler.unscale_(self.optimizer)
+      # clip gradients
+      self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+      # update optimizer
+      self.scaler.step(self.optimizer)
+      self.scaler.update()
 
-      return loss_acum / self.params.levels
+      return loss_acum
 
 
     def _write_summary(self, step, loss):
