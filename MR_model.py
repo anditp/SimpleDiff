@@ -421,8 +421,9 @@ class MR_Full_Learner:
             torch.cuda.empty_cache()
 
     def train_step(self, features):
-      for param in self.model.parameters():
-        param.grad = None
+      for level in range(self.levels):
+          for param in self.models[level].parameters():
+              param.grad = None
 
       device = features[0].device # device of the batch
       B = features[0].shape[0] # batch size
