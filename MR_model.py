@@ -164,12 +164,10 @@ class MR(nn.Module):
         self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
         self.in_channels = params.num_coords
         self.mid_channels = params.model_channels
-        self.levels = params.levels
-        self.params = params
         
         blocks = []
         
-        for i in range(self.levels):
+        for i in range(self.params.levels):
             blocks.append(ScI_MR(self.params))
         
         self.blocks = nn.ModuleList(blocks)
@@ -292,12 +290,12 @@ class MR_Learner:
               if self.step % 10000 < 5000:
                   conditions[level] = features[level]
               else:
-                  conditions[level] = predicted[level + 1].detach().clone().to(device)
+                  conditions[level] = predicted[level + 1].detach().to(device)
             
           with self.autocast:
             # forward pass
             # predicted is also a dictionary with the same structure of noisy_batch and features
-            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level], level)
+            predicted[level] = self.model(noisy_batch[level], diff_steps, conditions[level])
             # compute loss
             loss = self.loss_fn(noise[level], predicted[level])
             if level == self.params.levels - 1:
@@ -305,18 +303,18 @@ class MR_Learner:
             else:
                 loss_acum += loss
             
-      loss_acum /= self.params.levels
-      # backward pass with scaling to avoid underflow gradients
-      self.scaler.scale(loss_acum).backward()
-      # unscale the gradients before clipping them
-      self.scaler.unscale_(self.optimizer)
-      # clip gradients
-      self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-      # update optimizer
-      self.scaler.step(self.optimizer)
-      self.scaler.update()
+    
+          # backward pass with scaling to avoid underflow gradients
+          self.scaler.scale(loss).backward()
+          # unscale the gradients before clipping them
+          self.scaler.unscale_(self.optimizer)
+          # clip gradients
+          self.grad_norm = nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+          # update optimizer
+          self.scaler.step(self.optimizer)
+          self.scaler.update()
 
-      return loss_acum
+      return loss_acum / self.params.levels
 
 
     def _write_summary(self, step, loss):
@@ -331,8 +329,158 @@ class MR_Learner:
 
 
 
+#%%
 
 
+class MR_Full_Learner:
+    def __init__(self, model_dir, models, dataset, optimizers, params, **kwargs):
+      os.makedirs(model_dir, exist_ok=True)
+      self.model_dir = model_dir
+      self.levels = params.levels
+      self.models = models
+      self.dataset = dataset
+      self.optimizers = optimizers
+      self.params = params
+      self.autocast = torch.cuda.amp.autocast(enabled=kwargs.get("fp16", False))
+      self.scalers = {l: torch.cuda.amp.GradScaler(enabled=kwargs.get("fp16", False)) for l in range(self.levels)}
+      self.step = 0
+      self.checkpoints_hop = kwargs.get("checkpoints_hop", 50000)
+      self.summary_hop = kwargs.get("summary_hop", 512)
+      # build diffusion process with a given schedule
+      betas = create_beta_schedule(steps=self.params.num_diff_steps, scheduler=self.params.scheduler)
+      self.diffuser = GaussianDiffusion(betas)
+      self.loss_fn = nn.MSELoss(reduction='mean')
+      self.summary_writer = None
+      self.max_grad_norm = kwargs.get("max_grad_norm", 1)
+
+    def state_dict(self):
+        state_dict = {}
+        for level in range(self.levels):
+            if hasattr(self.models[level], 'module') and isinstance(self.models[level].module, nn.Module):
+                model_state[level] = self.models[level].module.state_dict()
+            else:
+                model_state[level] = self.models[level].state_dict()
+            state_dict[level] = {
+              'step': self.step,
+              'model': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in model_state.items() },
+              'optimizer': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in self.optimizer.state_dict().items() },
+              'params': dict(self.params),
+              'scaler': self.scaler.state_dict(),
+            }
+        return state_dict
+
+    def load_state_dict(self, state_dict):
+        for level in range(self.levels):
+          if hasattr(self.models[level], 'module') and isinstance(self.models[level].module, nn.Module):
+              self.model[level].module.load_state_dict(state_dict['model'])
+          else:
+              self.model[level].load_state_dict(state_dict['model'])
+          self.optimizers[level].load_state_dict(state_dict['optimizer'])
+          self.scalers[level].load_state_dict(state_dict['scaler'])
+          self.step = state_dict[0]['step']
+
+    def save_to_checkpoint(self, filename='weights'):
+      save_basename = f'{filename}-{self.step}.pt'
+      save_name = f'{self.model_dir}/{save_basename}'
+      link_name = f'{self.model_dir}/{filename}.pt'
+      torch.save(self.state_dict(), save_name)
+      if os.path.islink(link_name):
+          os.unlink(link_name)
+      os.symlink(save_basename, link_name)
+
+    def restore_from_checkpoint(self, filename='weights'):
+      try:
+        checkpoint = torch.load(f'{self.model_dir}/{filename}.pt')
+        self.load_state_dict(checkpoint)
+        return True
+      except FileNotFoundError:
+        return False
+
+    def train(self, max_steps=None):
+      device = next(self.models[0].parameters()).device
+      while True:
+        # number of epochs = max_steps / num_batches
+        # e.g. for max_steps = 100000 and num_batches = 1000, we have 100 epochs
+        for features in self.dataset:
+            logger.log(f'Epoch {self.step // 327160}')
+            if max_steps is not None and self.step >= max_steps:
+                # Save final checkpoint.
+                self.save_to_checkpoint()
+                return
+            features = _nested_map(features, lambda x: x.to(device) if isinstance(x, torch.Tensor) else x)
+            loss = self.train_step(features)
+            if torch.isnan(loss).any():
+                raise RuntimeError(f'Detected NaN loss at step {self.step}.')
+            if self.is_master:
+                if self.step % self.summary_hop == 0:
+                  self._write_summary(self.step, loss)
+                if self.step % self.checkpoints_hop == 0:
+                  self.save_to_checkpoint()
+            self.step += 1
+              
+            torch.cuda.empty_cache()
+
+    def train_step(self, features):
+      for param in self.model.parameters():
+        param.grad = None
+
+      device = features[0].device # device of the batch
+      B = features[0].shape[0] # batch size
+      
+      # create a tensor with random diffusion times for each sample in the batch
+      diff_steps = torch.randint(0, self.params.num_diff_steps, (B,), device=device)
+      # diffusion process
+      noisy_batch = {}
+      noise = {}
+      
+      for level in range(self.params.levels - 1, -1, -1):
+          noisy_batch[level], noise[level] = self.diffuser.forward_diffusion_process(features[level], diff_steps, device=device)
+      conditions = {}
+      predicted = {}
+      
+      for level in range(self.params.levels - 1, -1, -1):
+          if level == self.params.levels - 1:
+              conditions[self.params.levels - 1] = torch.zeros_like(features[0])
+          else:
+              if self.step % 10000 < 5000:
+                  conditions[level] = features[level]
+              else:
+                  conditions[level] = predicted[level + 1].detach().to(device)
+            
+          with self.autocast:
+            # forward pass
+            # predicted is also a dictionary with the same structure of noisy_batch and features
+            predicted[level] = self.models[level](noisy_batch[level], diff_steps, conditions[level])
+            # compute loss
+            loss = self.loss_fn(noise[level], predicted[level])
+            if level == self.levels - 1:
+                loss_acum = loss.detach()
+            else:
+                loss_acum += loss.detach()
+            
+    
+          # backward pass with scaling to avoid underflow gradients
+          self.scalers[level].scale(loss).backward()
+          # unscale the gradients before clipping them
+          self.scalers[level].unscale_(self.optimizers[level])
+          # clip gradients
+          self.grad_norm = nn.utils.clip_grad_norm_(self.models[level].parameters(), self.max_grad_norm)
+          # update optimizer
+          self.scalers[level].step(self.optimizers[level])
+          self.scalers[level].update()
+
+      return loss_acum / self.params.levels
+
+
+    def _write_summary(self, step, loss):
+      """
+      Function that adds to Tensorboard the loss and the gradient norm.
+      """
+      writer = self.summary_writer or SummaryWriter(self.model_dir, purge_step=step)
+      writer.add_scalar('train/loss', loss, step)
+      writer.add_scalar('train/grad_norm', self.grad_norm, step)
+      writer.flush()
+      self.summary_writer = writer
 
 
         
