@@ -191,18 +191,18 @@ def generate_trajectories_full_mr(args, models, model_params, device):
         x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
         trajectories = [x_0] * model_params.levels
         gen_x = {}
-        for level in range(model_params.levels - 1, -1, -1):
-            logger.log(level)
-            noise = trajectories[level]
-            gen_x[level] = torch.Tensor(noise).to(device)
-            
-            if level == model_params.levels - 1:
-                condition = torch.zeros_like(gen_x[level])
-            else:
-                condition = gen_x[level + 1]
-            # T-1 steps of denoising
-            # we are iterating backwards
-            for t in range(len(alpha) - 1, -1, -1):
+        # T-1 steps of denoising
+        # we are iterating backwards
+        for t in range(len(alpha) - 1, -1, -1):
+            for level in range(model_params.levels - 1, -1, -1):
+                logger.log(level)
+                noise = trajectories[level]
+                gen_x[level] = torch.Tensor(noise).to(device)
+                
+                if level == model_params.levels - 1:
+                    condition = torch.zeros_like(gen_x[level])
+                else:
+                    condition = gen_x[level + 1]
                 c1 = 1 / alpha[t]**0.5
                 c2 = beta[t] / (1 - alpha_cum[t])**0.5
                 pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
@@ -216,7 +216,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
                     gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
                 
         
-        logger.log(gen_x[level].shape)
+        logger.log(gen_x[0].shape)
 
     return gen_x[0]
 
