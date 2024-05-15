@@ -79,7 +79,7 @@ class ConvBlockRes(nn.Module):
       :param time_embed_dim: dimension of the time embedding. Default is 512.
       :param num_heads: number of heads for the multi-head attention. Default is -1, which means no attention.
     """
-    def __init__(self, in_channels=1, mid_channels=8, kernel_size=3, res="same", time_embed_dim=512, num_heads=-1):
+    def __init__(self, in_channels=1, mid_channels=8, out_channels = 1, kernel_size=3, res="same", time_embed_dim=512, num_heads=-1):
         super().__init__()
         self.res = res
         self.in_channels = in_channels
@@ -91,7 +91,7 @@ class ConvBlockRes(nn.Module):
         self.has_attention = num_heads > 0
         self.mid_conv = nn.Sequential(Conv1d(mid_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
                                  nn.LeakyReLU(0.1))
-        self.out_conv = Conv1d(mid_channels, out_channels=in_channels, kernel_size=kernel_size, padding=1)
+        self.out_conv = Conv1d(mid_channels, out_channels=out_channels, kernel_size=kernel_size, padding=1)
         if res == "same":
             self.op = nn.Identity()
         elif res == "down":
@@ -251,7 +251,7 @@ class ScI_MR_Res(nn.Module):
         self.mid_channels = params.model_channels
         self.relu = nn.LeakyReLU(0.1)
         
-        self.condition_preprocess = ConvBlockRes(self.in_channels, out_channels = self.mid_channels, res = "up", kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+        self.condition_preprocess = ConvBlockRes(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, res = "up", kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
         
         self.level_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
 
