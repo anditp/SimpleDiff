@@ -66,6 +66,71 @@ class SinusoidalPositionEmbeddings(nn.Module):
 
 
 
+class ConvBlockRes(nn.Module):
+    """
+    Block of convolutions, that process one sample at one scale. It also process the timestep
+    embedding. 
+
+      :param in_channels: number of input channels; corresponds to the number of coordinates.
+      :param mid_channels: number of channels in the hidden layers.
+      :param kernel_size: kernel size of the convolutional layers.
+      :param res: indicates if a scaling should be performed at the end. Can be "same" (same dimensions), 
+      'down' (downscaling to half) or 'up' (upscaling to double).
+      :param time_embed_dim: dimension of the time embedding. Default is 512.
+      :param num_heads: number of heads for the multi-head attention. Default is -1, which means no attention.
+    """
+    def __init__(self, in_channels=1, mid_channels=8, kernel_size=3, res="same", time_embed_dim=512, num_heads=-1):
+        super().__init__()
+        self.res = res
+        self.in_channels = in_channels
+        self.time_embed_layers = nn.Sequential(
+            nn.Linear(time_embed_dim, mid_channels),
+            )
+        self.in_conv = nn.Sequential(Conv1d(in_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
+                                     nn.LeakyReLU(0.1))
+        self.has_attention = num_heads > 0
+        if self.has_attention:
+            self.attention = AttentionBlock(mid_channels, num_heads=num_heads) 
+        self.mid_conv = nn.Sequential(Conv1d(mid_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
+                                 nn.LeakyReLU(0.1))
+        self.out_conv = Conv1d(mid_channels, out_channels=in_channels, kernel_size=kernel_size, padding=1)
+        if res == "same":
+            self.op = nn.Identity()
+        elif res == "down":
+            self.op = max_pool_nd(1, kernel_size=2, ceil_mode=False) # 1D max pooling
+        else:
+            # assign F.interpolate to self.op, without calling the function
+            self.op = F.interpolate
+
+
+    def forward(self, x, time_embed):
+        """
+        Args:
+            x (torch.Tensor): input of the block. x.shape should be (N, 1, L) where N is the batch size and L is the length of the sample
+            or (N, 3, L) for 3D samples. Note that the channel dimension must come before the length dimension.
+            time_embed (torch.Tensor): time embedding of the sample. time_embed.shape should be (N, time_embed_dim)
+        Returns:
+            y (torch.Tensor): output of the block, with the same shape as x.
+        """
+
+        h = self.in_conv(x) # (batch,coordinates, 2048 or less)
+        time_embed = self.time_embed_layers(time_embed).type(h.dtype) # (batch,8)
+        while len(time_embed.shape) < len(h.shape):
+            time_embed = time_embed[..., None] # (batch,8,1)
+        h = h + time_embed
+        if self.has_attention:
+            h = self.attention(h)
+        h = self.mid_conv(h)
+        h = self.out_conv(h)
+        if self.res == "up":
+            y = self.op(h, scale_factor=2, mode="nearest")
+        else :
+            y = self.op(h)
+        return y 
+
+
+
+
 class ConvBlock(nn.Module):
     """
     Block of convolutions, that process one sample at one scale. It also process the timestep
@@ -153,8 +218,7 @@ class ScI_MR(nn.Module):
 
 
 
-
-class MR(nn.Module):
+class ScI_MR_0(nn.Module):
     
     def __init__(self, params):
         super().__init__()
@@ -164,17 +228,53 @@ class MR(nn.Module):
         self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
         self.in_channels = params.num_coords
         self.mid_channels = params.model_channels
-        
-        blocks = []
-        
-        for i in range(self.params.levels):
-            blocks.append(ScI_MR(self.params))
-        
-        self.blocks = nn.ModuleList(blocks)
+        self.relu = nn.LeakyReLU(0.1)
+                
+        self.level_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+
+        self.network_block = ConvBlock(self.mid_channels, mid_channels = self.mid_channels, out_channels = self.in_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
     
     
-    def forward(self, x, t, c, level):
-        return self.blocks[level](x, t, c)
+    def forward(self, x, t):
+        t = self.diffusion_embedding(t)
+        h = self.level_preprocess(x, t)
+        h = self.relu(h)
+        h = self.network_block(h, t)
+        return h
+
+
+class ScI_MR_Res(nn.Module):
+    
+    def __init__(self, params):
+        super().__init__()
+        set_params = list(params.keys())
+        self.embed_dim = params.embed_dim if "embed_dim" in set_params else 128
+        self.proj_embed_dim = params.proj_embed_dim if "proj_embed_dim" in set_params else self.embed_dim * 4
+        self.diffusion_embedding = SinusoidalPositionEmbeddings(num_steps=params.num_diff_steps, dim=self.embed_dim, proj_dim=self.proj_embed_dim)
+        self.in_channels = params.num_coords
+        self.mid_channels = params.model_channels
+        self.relu = nn.LeakyReLU(0.1)
+        
+        self.condition_preprocess = ConvBlockRes(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, res = "up", kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+        
+        self.level_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+
+        self.conditioned_network_block1 = ConvBlock(2 * self.mid_channels, mid_channels = 2 * self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+        self.conditioned_network_block2 = ConvBlock(self.mid_channels, mid_channels = self.mid_channels, out_channels = self.in_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+    
+    
+    def forward(self, x, t, c):
+        t = self.diffusion_embedding(t)
+        d = self.condition_preprocess(c, t)
+        d = self.relu(d)
+        h = self.level_preprocess(x, t)
+        h = self.relu(h)
+        h = torch.concat((h, d), dim = 1)
+        h = self.conditioned_network_block1(h, t)
+        h = self.relu(h)
+        h = self.conditioned_network_block2(h, t)
+        return h
+
 
 
 
@@ -484,8 +584,160 @@ class MR_Full_Learner:
       self.summary_writer = writer
 
 
-        
-        
+
+#%%
+
+
+class MR_Res_Learner:
+    def __init__(self, model_dir, models, dataset, optimizers, params, **kwargs):
+      os.makedirs(model_dir, exist_ok=True)
+      self.model_dir = model_dir
+      self.levels = params.levels
+      self.models = models
+      self.dataset = dataset
+      self.optimizers = optimizers
+      self.params = params
+      self.autocast = torch.cuda.amp.autocast(enabled=kwargs.get("fp16", False))
+      self.scalers = {l: torch.cuda.amp.GradScaler(enabled=kwargs.get("fp16", False)) for l in range(self.levels)}
+      self.step = 0
+      self.checkpoints_hop = kwargs.get("checkpoints_hop", 50000)
+      self.summary_hop = kwargs.get("summary_hop", 512)
+      # build diffusion process with a given schedule
+      betas = create_beta_schedule(steps=self.params.num_diff_steps, scheduler=self.params.scheduler)
+      self.diffuser = GaussianDiffusion(betas)
+      self.loss_fn = nn.MSELoss(reduction='mean')
+      self.summary_writer = None
+      self.max_grad_norm = kwargs.get("max_grad_norm", 1)
+
+    def state_dict(self):
+        state_dict = {}
+        for level in range(self.levels):
+            if hasattr(self.models[level], 'module') and isinstance(self.models[level].module, nn.Module):
+                model_state = self.models[level].module.state_dict()
+            else:
+                model_state = self.models[level].state_dict()
+            state_dict[level] = {
+              'step': self.step,
+              'model': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in model_state.items() },
+              'optimizer': { k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in self.optimizers[level].state_dict().items() },
+              'params': dict(self.params),
+              'scaler': self.scalers[level].state_dict(),
+            }
+        return state_dict
+
+    def load_state_dict(self, state_dict):
+        for level in range(self.levels):
+          if hasattr(self.models[level], 'module') and isinstance(self.models[level].module, nn.Module):
+              self.model[level].module.load_state_dict(state_dict['model'])
+          else:
+              self.model[level].load_state_dict(state_dict['model'])
+          self.optimizers[level].load_state_dict(state_dict['optimizer'])
+          self.scalers[level].load_state_dict(state_dict['scaler'])
+          self.step = state_dict[0]['step']
+
+    def save_to_checkpoint(self, filename='weights'):
+      save_basename = f'{filename}-{self.step}.pt'
+      save_name = f'{self.model_dir}/{save_basename}'
+      link_name = f'{self.model_dir}/{filename}.pt'
+      torch.save(self.state_dict(), save_name)
+      if os.path.islink(link_name):
+          os.unlink(link_name)
+      os.symlink(save_basename, link_name)
+
+    def restore_from_checkpoint(self, filename='weights'):
+      try:
+        checkpoint = torch.load(f'{self.model_dir}/{filename}.pt')
+        self.load_state_dict(checkpoint)
+        return True
+      except FileNotFoundError:
+        return False
+
+    def train(self, max_steps=None):
+      device = next(self.models[0].parameters()).device
+      while True:
+        # number of epochs = max_steps / num_batches
+        # e.g. for max_steps = 100000 and num_batches = 1000, we have 100 epochs
+        for features in self.dataset:
+            logger.log(f'Epoch {self.step // 327160}')
+            if max_steps is not None and self.step >= max_steps:
+                # Save final checkpoint.
+                self.save_to_checkpoint()
+                return
+            features = _nested_map(features, lambda x: x.to(device) if isinstance(x, torch.Tensor) else x)
+            loss = self.train_step(features)
+            if torch.isnan(loss).any():
+                raise RuntimeError(f'Detected NaN loss at step {self.step}.')
+            if self.is_master:
+                if self.step % self.summary_hop == 0:
+                  self._write_summary(self.step, loss)
+                if self.step % self.checkpoints_hop == 0:
+                  self.save_to_checkpoint()
+            self.step += 1
+              
+            torch.cuda.empty_cache()
+
+    def train_step(self, features):
+      for level in range(self.levels):
+          for param in self.models[level].parameters():
+              param.grad = None
+
+      device = features[0].device # device of the batch
+      B = features[0].shape[0] # batch size
+      
+      # create a tensor with random diffusion times for each sample in the batch
+      diff_steps = torch.randint(0, self.params.num_diff_steps, (B,), device=device)
+      # diffusion process
+      noisy_batch, noise = self.diffuser.forward_diffusion_process_dict(features, diff_steps, device=device)
+      
+      conditions = {}
+      predicted = {}
+      
+      for level in range(self.levels - 1, -1, -1):
+          if level == self.levels - 1:
+              with self.autocast:
+                # forward pass
+                # predicted is also a dictionary with the same structure of noisy_batch and features
+                predicted[level] = self.models[level](noisy_batch[level], diff_steps)
+                # compute loss
+                loss = self.loss_fn(noise[level], predicted[level])
+                loss_acum = loss.detach()
+          else:
+              if self.step % 20000 < 10000:
+                  conditions[level] = features[level]
+              else:
+                  conditions[level] = predicted[level + 1].detach().to(device)
+            
+              with self.autocast:
+                # forward pass
+                # predicted is also a dictionary with the same structure of noisy_batch and features
+                predicted[level] = self.models[level](noisy_batch[level], diff_steps, conditions[level])
+                # compute loss
+                loss = self.loss_fn(noise[level], predicted[level])
+                loss_acum += loss.detach()
+            
+    
+          # backward pass with scaling to avoid underflow gradients
+          self.scalers[level].scale(loss).backward()
+          # unscale the gradients before clipping them
+          self.scalers[level].unscale_(self.optimizers[level])
+          # clip gradients
+          self.grad_norm = nn.utils.clip_grad_norm_(self.models[level].parameters(), self.max_grad_norm)
+          # update optimizer
+          self.scalers[level].step(self.optimizers[level])
+          self.scalers[level].update()
+
+      return loss_acum / self.params.levels
+
+
+    def _write_summary(self, step, loss):
+      """
+      Function that adds to Tensorboard the loss and the gradient norm.
+      """
+      writer = self.summary_writer or SummaryWriter(self.model_dir, purge_step=step)
+      writer.add_scalar('train/loss', loss, step)
+      writer.add_scalar('train/grad_norm', self.grad_norm, step)
+      writer.flush()
+      self.summary_writer = writer
 
 
 

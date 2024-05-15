@@ -15,7 +15,12 @@ def _train_impl(replica_id, model, dataset, params):
         for i in range(params.levels):
             opts[i] = torch.optim.Adam(model[i].parameters(), lr=params.learning_rate)
         learner = MR_Full_Learner(params.model_dir, model, dataset, opts, params)
-        
+    
+    elif params.type == "res_mr":
+        opts = {}
+        for i in range(params.levels):
+            opts[i] = torch.optim.Adam(model[i].parameters(), lr=params.learning_rate)
+        learner = MR_Res_Learner(params.model_dir, model, dataset, opts, params)
     else:
         opt = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
         
@@ -41,7 +46,7 @@ def train_distributed(replica_id, replica_count, port, model_params):
     torch.distributed.init_process_group('nccl', rank=replica_id, world_size=replica_count)
     dataset = dataset_from_file(model_params["data_path"], model_params["batch_size"], 
                                 model_params["levels"], is_distributed=True,
-                                fourier = True,
+                                fourier = False,
                                 coordinate=model_params.coordinate)
     device = torch.device('cuda', replica_id)
     torch.cuda.set_device(device)
@@ -58,6 +63,13 @@ def train_distributed(replica_id, replica_count, port, model_params):
         models = {}
         for level in range(model_params.levels):
             models[level] = ScI_MR(model_params).to(device)
+            models[level] = DistributedDataParallel(models[level], device_ids=[replica_id])
+        _train_impl(replica_id, models, dataset, model_params)
+        return
+    elif model_params.type == "res_mr":
+        models = {(model_params.levels - 1): ScI_MR_0(model_params).to(device)}
+        for level in range(model_params.levels - 1):
+            models[level] = ScI_MR_Res(model_params).to(device)
             models[level] = DistributedDataParallel(models[level], device_ids=[replica_id])
         _train_impl(replica_id, models, dataset, model_params)
         return
