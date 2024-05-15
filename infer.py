@@ -158,7 +158,7 @@ def generate_trajectories(args, model, model_params, device, fast_sampling=False
 
 
 
-def generate_trajectories_mr(args, models, model_params, device):
+def generate_trajectories_full_mr(args, models, model_params, device):
     
     with torch.no_grad():
         # get noise schedule
