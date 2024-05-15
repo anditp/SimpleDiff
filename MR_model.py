@@ -703,7 +703,7 @@ class MR_Res_Learner:
                 loss_acum = loss.detach()
           else:
               if self.step % 20000 < 10000:
-                  conditions[level] = features[level]
+                  conditions[level] = features[level + 1]
               else:
                   conditions[level] = predicted[level + 1].detach().to(device)
             
