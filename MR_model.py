@@ -689,7 +689,7 @@ class MR_Res_Learner:
                 loss = self.loss_fn(noise[level], predicted[level])
                 loss_acum = loss.detach()
           else:
-              exact = torch.randint(0, 2, (1))
+              exact = torch.randint(2, (1,))
               if exact == 0:
                   conditions[level] = noise[level + 1]
               else:
