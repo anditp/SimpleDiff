@@ -698,7 +698,12 @@ class MR_Res_Learner:
                 loss = self.loss_fn(noise[level], predicted[level])
                 loss_acum = loss.detach()
           else:
-              conditions[level] = predicted[level + 1].detach().to(device)
+              if self.step % 20000 < 10000:
+                  conditions[level] = (noisy_batch[level + 1] - \
+                      self.diffuser.sqrt_alphas_cumprod[diff_steps] * features[level + 1]) / \
+                      self.diffuser.sqrt_one_minus_alphas_cumprod[diff_steps]
+              else:
+                  conditions[level] = predicted[level + 1].detach().to(device)
             
               with self.autocast:
                 # forward pass
