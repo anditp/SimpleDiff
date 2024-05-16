@@ -700,8 +700,8 @@ class MR_Res_Learner:
           else:
               if self.step % 20000 < 10000:
                   conditions[level] = (noisy_batch[level + 1] - \
-                      self.diffuser.sqrt_alphas_cumprod[diff_steps] * features[level + 1]) / \
-                      self.diffuser.sqrt_one_minus_alphas_cumprod[diff_steps]
+                      torch.unsqueeze(self.diffuser.sqrt_alphas_cumprod[diff_steps], 1) * features[level + 1]) / \
+                      torch.unsqueeze(self.diffuser.sqrt_one_minus_alphas_cumprod[diff_steps], 1)
               else:
                   conditions[level] = predicted[level + 1].detach().to(device)
             
