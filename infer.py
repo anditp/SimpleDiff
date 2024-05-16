@@ -264,7 +264,6 @@ def main(args):
                 models[level] = ScI_MR_Res(model_params).to(device)
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
-            logger.log(models[level])
     
     else:
         if model_params.type == "fourier":
