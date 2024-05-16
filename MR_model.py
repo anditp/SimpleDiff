@@ -699,9 +699,7 @@ class MR_Res_Learner:
                 loss_acum = loss.detach()
           else:
               if self.step % 20000 < 10000:
-                  conditions[level] = (noisy_batch[level + 1] - \
-                      get_index_from_list(self.diffuser.sqrt_alphas_cumprod, diff_steps, features[level+1].shape) * features[level + 1]) / \
-                      get_index_from_list(self.diffuser.sqrt_one_minus_alphas_cumprod, diff_steps, features[level+1].shape)
+                  conditions[level] = noise[level + 1]
               else:
                   conditions[level] = predicted[level + 1].detach().to(device)
             
