@@ -1,7 +1,7 @@
 import torch
 from argparse import ArgumentParser
 from model import ScIDiff, Simple_Diff, ScIDiff_fourier, Simple_Diff_fourier
-from MR_model import ScI_MR
+from MR_model import ScI_MR, ScI_MR_0, ScI_MR_Res
 import yaml
 from attrdict import AttrDict
 from diffusion import create_beta_schedule
@@ -205,7 +205,10 @@ def generate_trajectories_full_mr(args, models, model_params, device):
             for t in range(len(alpha) - 1, -1, -1):
                 c1 = 1 / alpha[t]**0.5
                 c2 = beta[t] / (1 - alpha_cum[t])**0.5
-                pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
+                if level == model_params.levels - 1:
+                    pred_noise = models[level](gen_x[level], torch.tensor([t], device=device))
+                else:
+                    pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
                 # denoise
                 gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
                 if t > 0:
@@ -251,6 +254,16 @@ def main(args):
             models[level] = ScI_MR(model_params).to(device)
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
+            
+    elif model_params.type == "res_mr":
+        models = {}
+        for level in range(model_params.levels):
+            if level == model_params.levels - 1:
+                models[level] = ScI_MR_0(model_params).to(device)
+            else:
+                models[level] = ScI_MR_Res(model_params).to(device)
+            models[level].load_state_dict(checkpoint[level]["model"])
+            models[level].eval()
     
     else:
         if model_params.type == "fourier":
@@ -271,7 +284,7 @@ def main(args):
         logger.log("Iteration %d \n" % _)
         if model_params.type == "sci_mr":
             gen_full = generate_trajectories_mr(args, model, model_params, device)
-        elif model_params.type == "mr":
+        elif model_params.type == "res_mr":
             gen_full = generate_trajectories_full_mr(args, models, model_params, device)
         else:
             gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
