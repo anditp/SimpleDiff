@@ -698,10 +698,7 @@ class MR_Res_Learner:
                 loss = self.loss_fn(noise[level], predicted[level])
                 loss_acum = loss.detach()
           else:
-              if self.step % 20000 < 10000:
-                  conditions[level] = features[level + 1]
-              else:
-                  conditions[level] = predicted[level + 1].detach().to(device)
+              conditions[level] = predicted[level + 1].detach().to(device)
             
               with self.autocast:
                 # forward pass
