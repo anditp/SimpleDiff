@@ -219,7 +219,6 @@ def generate_trajectories_full_mr(args, models, model_params, device):
                     gen_x[level] = gen_x[level].clamp(-1.0, 1.0)
                 
         
-        logger.log(gen_x[level].shape)
 
     return gen_x[0]
 
