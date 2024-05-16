@@ -189,7 +189,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
         # get random noise vector at several scales
         # random tensor must be of shape (N, num_coords, length + padding)
         x_0 = np.random.randn(B, model_params.num_coords, model_params.traj_len)
-        trajectories = [x_0] * model_params.levels
+        trajectories = interpolate_nscales(x_0, scales = model_params.levels)
         gen_x = {}
         for level in range(model_params.levels - 1, -1, -1):
             logger.log(level)
