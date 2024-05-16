@@ -83,7 +83,7 @@ def max_pool_nd(dims, *args, **kwargs):
         return nn.MaxPool3d(*args, **kwargs)
     raise ValueError(f"unsupported dimensions: {dims}")
 
-def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
+def interpolate_nscales(sample, scales=2, method="nearest", smoother = None, to_numpy=False):
     '''
     Function that applies a pyramidal interpolation to a batch of samples. A pyramidal interpolation
     is a sequence of interpolations with a scale factor of 1/2, 1/4, 1/8 and so on.
@@ -104,16 +104,28 @@ def interpolate_nscales(sample, scales=2, method="nearest", to_numpy=False):
     # e.g for one trajectory, Tensor should be (1, 3, 2000)
     logger.log(sample.shape)
     pyramidal_sample = {0: sample}
-    for i in range(1, scales):
-        scale = 1/2**i
-        y = F.interpolate(sample, scale_factor=scale, mode=method)
-        if(to_numpy):
-            # we have to permute the dimensions to plot them
-            # delete the batch dimension
-            # and trasform to numpy
-            pyramidal_sample[i] = y.squeeze(0).permute(1,0).numpy()
-        else:
-            pyramidal_sample[i] = y
+    if smoother is not None:
+        for i in range(1, scales):
+            scale = 1/2**i
+            y = F.interpolate(smoother(sample, i), scale_factor=scale, mode=method)
+            if(to_numpy):
+                # we have to permute the dimensions to plot them
+                # delete the batch dimension
+                # and trasform to numpy
+                pyramidal_sample[i] = y.squeeze(0).permute(1,0).numpy()
+            else:
+                pyramidal_sample[i] = y
+    else:
+        for i in range(1, scales):
+            scale = 1/2**i
+            y = F.interpolate(sample, scale_factor=scale, mode=method)
+            if(to_numpy):
+                # we have to permute the dimensions to plot them
+                # delete the batch dimension
+                # and trasform to numpy
+                pyramidal_sample[i] = y.squeeze(0).permute(1,0).numpy()
+            else:
+                pyramidal_sample[i] = y
     return pyramidal_sample
 
 

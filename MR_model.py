@@ -79,7 +79,7 @@ class ConvBlockRes(nn.Module):
       :param time_embed_dim: dimension of the time embedding. Default is 512.
       :param num_heads: number of heads for the multi-head attention. Default is -1, which means no attention.
     """
-    def __init__(self, in_channels=1, mid_channels=8, out_channels = 1, kernel_size=3, res="same", time_embed_dim=512, num_heads=-1):
+    def __init__(self, in_channels=1, mid_channels=8, out_channels = 1, kernel_size=3, res="same", time_embed_dim=512, **kwargs):
         super().__init__()
         self.res = res
         self.in_channels = in_channels
@@ -88,9 +88,6 @@ class ConvBlockRes(nn.Module):
             )
         self.in_conv = nn.Sequential(Conv1d(in_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
                                      nn.LeakyReLU(0.1))
-        self.has_attention = num_heads > 0
-        self.mid_conv = nn.Sequential(Conv1d(mid_channels, out_channels=mid_channels, kernel_size=kernel_size, padding=1),
-                                 nn.LeakyReLU(0.1))
         self.out_conv = Conv1d(mid_channels, out_channels=out_channels, kernel_size=kernel_size, padding=1)
         if res == "same":
             self.op = nn.Identity()
@@ -116,7 +113,6 @@ class ConvBlockRes(nn.Module):
         while len(time_embed.shape) < len(h.shape):
             time_embed = time_embed[..., None] # (batch,8,1)
         h = h + time_embed
-        h = self.mid_conv(h)
         h = self.out_conv(h)
         if self.res == "up":
             y = self.op(h, scale_factor=2, mode="nearest")
@@ -150,10 +146,6 @@ class ConvBlock(nn.Module):
                                      nn.BatchNorm1d(mid_channels),
                                      nn.LeakyReLU(0.1),
                                      nn.Dropout(0.1))
-        self.mid_conv = nn.Sequential(Conv1d(mid_channels, out_channels=mid_channels, kernel_size=kernel_size, padding="same"),
-                                 nn.BatchNorm1d(mid_channels),
-                                 nn.LeakyReLU(0.1),
-                                 nn.Dropout(0.1))
         self.out_conv = Conv1d(mid_channels, out_channels=out_channels, kernel_size=kernel_size, padding="same")
 
 
@@ -172,7 +164,6 @@ class ConvBlock(nn.Module):
         while len(time_embed.shape) < len(h.shape):
             time_embed = time_embed[..., None] # (batch,8,1)
         h = h + time_embed
-        h = self.mid_conv(h)
         h = self.out_conv(h)
         return h
 
@@ -698,7 +689,8 @@ class MR_Res_Learner:
                 loss = self.loss_fn(noise[level], predicted[level])
                 loss_acum = loss.detach()
           else:
-              if self.step % 20000 < 10000:
+              exact = torch.randint(0, 2, 1)
+              if exact == 0:
                   conditions[level] = noise[level + 1]
               else:
                   conditions[level] = predicted[level + 1].detach().to(device)
