@@ -12,6 +12,8 @@ import numpy as np
 from utils import mse_loss, _nested_map, get_index_from_list
 from tqdm import tqdm
 
+sizes = [2000, 1000, 500, 250, 125, 67]
+
 
 def Conv1d(*args, **kwargs):
     """
@@ -79,7 +81,7 @@ class ConvBlockRes(nn.Module):
       :param time_embed_dim: dimension of the time embedding. Default is 512.
       :param num_heads: number of heads for the multi-head attention. Default is -1, which means no attention.
     """
-    def __init__(self, in_channels=1, mid_channels=8, out_channels = 1, kernel_size=3, res="same", time_embed_dim=512, **kwargs):
+    def __init__(self, in_channels=1, mid_channels=8, out_channels = 1, kernel_size=3, res="same", time_embed_dim=512, size = 2000, **kwargs):
         super().__init__()
         self.res = res
         self.in_channels = in_channels
@@ -96,6 +98,7 @@ class ConvBlockRes(nn.Module):
         else:
             # assign F.interpolate to self.op, without calling the function
             self.op = F.interpolate
+            self.size = size
 
 
     def forward(self, x, time_embed):
@@ -115,7 +118,7 @@ class ConvBlockRes(nn.Module):
         h = h + time_embed
         h = self.out_conv(h)
         if self.res == "up":
-            y = self.op(h, scale_factor=2, mode="nearest")
+            y = self.op(h, size = self.size, mode="nearest")
         else :
             y = self.op(h)
         return y 
@@ -232,7 +235,7 @@ class ScI_MR_0(nn.Module):
 
 class ScI_MR_Res(nn.Module):
     
-    def __init__(self, params):
+    def __init__(self, params, level):
         super().__init__()
         set_params = list(params.keys())
         self.embed_dim = params.embed_dim if "embed_dim" in set_params else 128
@@ -242,7 +245,7 @@ class ScI_MR_Res(nn.Module):
         self.mid_channels = params.model_channels
         self.relu = nn.LeakyReLU(0.1)
         
-        self.condition_preprocess = ConvBlockRes(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, res = "up", kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
+        self.condition_preprocess = ConvBlockRes(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, res = "up", kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim, size = sizes[level])
         
         self.level_preprocess = ConvBlock(self.in_channels, mid_channels=self.mid_channels, out_channels = self.mid_channels, kernel_size=params.kernel_size, time_embed_dim=self.proj_embed_dim)
 

@@ -69,7 +69,7 @@ def train_distributed(replica_id, replica_count, port, model_params):
     elif model_params.type == "res_mr":
         models = {(model_params.levels - 1): ScI_MR_0(model_params).to(device)}
         for level in range(model_params.levels - 1):
-            models[level] = ScI_MR_Res(model_params).to(device)
+            models[level] = ScI_MR_Res(model_params, level).to(device)
             models[level] = DistributedDataParallel(models[level], device_ids=[replica_id])
         _train_impl(replica_id, models, dataset, model_params)
         return
