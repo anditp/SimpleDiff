@@ -8,7 +8,7 @@ parameters:
   epochs: 500
   kernel_size: 3
   learning_rate: 0.00001
-  levels: 4
+  levels: 6
   max_grad_norm: 1
   max_steps: 5000000
   model_channels: 128
