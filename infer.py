@@ -260,7 +260,7 @@ def main(args):
             if level == model_params.levels - 1:
                 models[level] = ScI_MR_0(model_params).to(device)
             else:
-                models[level] = ScI_MR_Res(model_params).to(device)
+                models[level] = ScI_MR_Res(model_params, level).to(device)
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
     
