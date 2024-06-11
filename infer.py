@@ -256,7 +256,7 @@ def main(args):
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
             
-    elif model_params.type == "mr":
+    elif model_params.type == "res_mr":
         models = {}
         for level in range(model_params.levels):
             if level == model_params.levels - 1:
@@ -285,7 +285,7 @@ def main(args):
         logger.log("Iteration %d \n" % _)
         if model_params.type == "sci_mr":
             gen_full = generate_trajectories_mr(args, model, model_params, device)
-        elif model_params.type == "res_mr":
+        elif model_params.type == "mr":
             gen_full = generate_trajectories_full_mr(args, models, model_params, device)
         else:
             gen_full = generate_trajectories(args, model, model_params, device, fast_sampling=args.fast)
