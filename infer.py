@@ -208,6 +208,8 @@ def generate_trajectories_full_mr(args, models, model_params, device):
                 c1 = 1 / alpha[t]**0.5
                 c2 = beta[t] / (1 - alpha_cum[t])**0.5
                 
+                logger.log(condition.shape)
+                logger.log(gen_x[level].shape)
                 pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
                 # denoise
                 gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
