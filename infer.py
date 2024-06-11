@@ -201,7 +201,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
             for level in range(model_params.levels - 1, -1, -1):
                 
                 if level == model_params.levels - 1:
-                    condition = torch.zeros((B, 1, 125), device = models[level].device)
+                    condition = torch.zeros((B, 1, 125), device = device)
                 else:
                     condition = gen_x[level + 1]
                 
