@@ -201,12 +201,13 @@ def generate_trajectories_full_mr(args, models, model_params, device):
             for level in range(model_params.levels - 1, -1, -1):
                 
                 if level == model_params.levels - 1:
-                    condition = torch.zeros_like(gen_x[level])
+                    condition = torch.zeros((B, 1, 125))
                 else:
                     condition = gen_x[level + 1]
                 
                 c1 = 1 / alpha[t]**0.5
                 c2 = beta[t] / (1 - alpha_cum[t])**0.5
+                
                 pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
                 # denoise
                 gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
