@@ -256,7 +256,7 @@ def main(args):
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
             
-    elif model_params.type == "res_mr":
+    elif model_params.type == "mr":
         models = {}
         for level in range(model_params.levels):
             if level == model_params.levels - 1:
