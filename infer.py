@@ -6,12 +6,14 @@ import yaml
 from attrdict import AttrDict
 from diffusion import create_beta_schedule
 import numpy as np
-from utils import interpolate_nscales, fourier_nscales, _nested_map
+from utils import interpolate_nscales, fourier_nscales, _nested_map, GaussianSmoother
 from torch.nn import functional as F
 import logger
 
 MIN_VALS = np.array([-9.97037474, -8.63455392, -8.3230226 ])
 MAX_VALS = np.array([ 9.78241835, 10.2621928,   9.73699859])
+
+smoother = GaussianSmoother(model_params.levels)
 
 def reverse_minmax_norm(x, coordinate = -1, from_numpy=False):
     """
@@ -189,7 +191,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
         # get random noise vector at several scales
         # random tensor must be of shape (N, num_coords, length + padding)
         x_0 = torch.randn(B, model_params.num_coords, model_params.traj_len)
-        trajectories = interpolate_nscales(x_0, scales = model_params.levels)
+        trajectories = fourier_nscales(x_0, scales = model_params.levels, smoother = smoother)
         gen_x = {}
         
         for level in range(model_params.levels - 1, -1, -1):
@@ -201,7 +203,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
             for level in range(model_params.levels - 1, -1, -1):
                 logger.log(level)
                 if level == model_params.levels - 1:
-                    condition = torch.zeros((B, 1, 125), device = device)
+                    condition = torch.zeros((B, 1, 2000), device = device)
                 else:
                     condition = gen_x[level + 1]
                 
