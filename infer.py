@@ -201,7 +201,6 @@ def generate_trajectories_full_mr(args, models, model_params, device):
 
         for t in range(len(alpha) - 1, -1, -1):
             for level in range(model_params.levels - 1, -1, -1):
-                logger.log(level)
                 if level == model_params.levels - 1:
                     condition = torch.zeros_like(gen_x[level])
                 else:
