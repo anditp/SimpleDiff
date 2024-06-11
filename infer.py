@@ -13,7 +13,7 @@ import logger
 MIN_VALS = np.array([-9.97037474, -8.63455392, -8.3230226 ])
 MAX_VALS = np.array([ 9.78241835, 10.2621928,   9.73699859])
 
-smoother = GaussianSmoother(model_params.levels)
+smoother = GaussianSmoother(5)
 
 def reverse_minmax_norm(x, coordinate = -1, from_numpy=False):
     """
@@ -203,7 +203,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
             for level in range(model_params.levels - 1, -1, -1):
                 logger.log(level)
                 if level == model_params.levels - 1:
-                    condition = torch.zeros((B, 1, 2000), device = device)
+                    condition = torch.zeros_like(gen_x[level])
                 else:
                     condition = gen_x[level + 1]
                 
