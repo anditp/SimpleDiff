@@ -249,12 +249,15 @@ def main(args):
     chck_path = f"{args.model_dir}/weights.pt"
     checkpoint = torch.load(chck_path, map_location=device)
     
+    logger.log(model_params.type)
+    
     if model_params.type == "mr":
         models = {}
         for level in range(model_params.levels):
             models[level] = ScI_MR(model_params).to(device)
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
+            logger.log(models[level])
             
     elif model_params.type == "res_mr":
         models = {}
