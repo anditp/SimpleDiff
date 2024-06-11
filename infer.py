@@ -195,13 +195,13 @@ def generate_trajectories_full_mr(args, models, model_params, device):
         for level in range(model_params.levels - 1, -1, -1):
             noise = trajectories[level]
             gen_x[level] = torch.Tensor(noise).to(device)
-            
+        
 
         for t in range(len(alpha) - 1, -1, -1):
             for level in range(model_params.levels - 1, -1, -1):
                 
                 if level == model_params.levels - 1:
-                    condition = torch.zeros((B, 1, 250), device = device)
+                    condition = torch.zeros((B, 1, 2000), device = device)
                 else:
                     condition = gen_x[level + 1]
                 
