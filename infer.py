@@ -207,10 +207,7 @@ def generate_trajectories_full_mr(args, models, model_params, device):
                 
                 c1 = 1 / alpha[t]**0.5
                 c2 = beta[t] / (1 - alpha_cum[t])**0.5
-                if level == model_params.levels - 1:
-                    pred_noise = models[level](gen_x[level], torch.tensor([t], device=device))
-                else:
-                    pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
+                pred_noise = models[level](gen_x[level], torch.tensor([t], device=device), condition)
                 # denoise
                 gen_x[level] = c1 * (gen_x[level] - c2 * pred_noise)
                 if t > 0:
@@ -257,7 +254,6 @@ def main(args):
             models[level] = ScI_MR(model_params).to(device)
             models[level].load_state_dict(checkpoint[level]["model"])
             models[level].eval()
-            logger.log(models[level])
             
     elif model_params.type == "res_mr":
         models = {}
