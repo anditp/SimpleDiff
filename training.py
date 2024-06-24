@@ -60,10 +60,17 @@ def train_distributed(replica_id, replica_count, port, model_params):
     elif model_params.type == "sci_mr":
         model = ScI_MR(model_params).to(device)
     elif model_params.type == "mr":
+        nr = 0
         models = {}
         for level in range(model_params.levels):
             models[level] = ScI_MR(model_params).to(device)
+            
+            for p in models[level].parameters():
+                nr += torch.numel(p)
+            
             models[level] = DistributedDataParallel(models[level], device_ids=[replica_id])
+        
+        logger.log(nr)
         _train_impl(replica_id, models, dataset, model_params)
         return
     elif model_params.type == "res_mr":
