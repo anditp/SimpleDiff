@@ -43,13 +43,6 @@ def train(model_params):
 def train_distributed(replica_id, replica_count, port, model_params):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = str(port)
-    torch.distributed.init_process_group('nccl', rank=replica_id, world_size=replica_count)
-    dataset = dataset_from_file(model_params["data_path"], model_params["batch_size"], 
-                                model_params["levels"], is_distributed=True,
-                                fourier = True,
-                                coordinate=model_params.coordinate)
-    device = torch.device('cuda', replica_id)
-    torch.cuda.set_device(device)
     
     if model_params.type == "fourier":
         model = ScIDiff_fourier(model_params).to(device)
@@ -85,7 +78,13 @@ def train_distributed(replica_id, replica_count, port, model_params):
     model = DistributedDataParallel(model, device_ids=[replica_id])
     _train_impl(replica_id, model, dataset, model_params)
 
-
+    torch.distributed.init_process_group('nccl', rank=replica_id, world_size=replica_count)
+    dataset = dataset_from_file(model_params["data_path"], model_params["batch_size"], 
+                                model_params["levels"], is_distributed=True,
+                                fourier = True,
+                                coordinate=model_params.coordinate)
+    device = torch.device('cuda', replica_id)
+    torch.cuda.set_device(device)
     
     
     
