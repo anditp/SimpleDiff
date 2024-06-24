@@ -39,6 +39,22 @@ def main(args):
     model_params.coordinate = None if model_params.coordinate==-1 else model_params.coordinate
     model_params.num_coords = 3 if model_params.coordinate is None else 1
     logger.log(model_params)
+    
+    if model_params.type == "mr":
+        nr = 0
+        models = {}
+        for level in range(model_params.levels):
+            models[level] = ScI_MR(model_params)
+            
+            for p in models[level].parameters():
+                nr += torch.numel(p)
+            
+            #models[level] = DistributedDataParallel(models[level], device_ids=[replica_id])
+        
+        logger.log(nr)
+        #_train_impl(replica_id, models, dataset, model_params)
+        return
+    
     # dump config file to experiment directory
     with open(os.path.join(args.experiment_dir,"params.yaml"), "w") as f:
         yaml.dump(config, f)
